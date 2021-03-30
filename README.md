@@ -1,8 +1,6 @@
 
 # CANVAS INSTRUCTIONS (updated 3/29)
 
-
-
  1. All files are "text" files. For this project, please use the following filename extensions to help us understand the content of these files:
     * .sic -- SIC/XE assembly source
     * .lis -- SIC/XE listing file
@@ -36,3 +34,6 @@
 
 
 	and to complete the set, the ESTAB: P2sampleESTAB.st
+
+
+## ***This README will be replaced for the required one noted on the specs at end of project***
