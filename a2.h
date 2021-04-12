@@ -19,9 +19,10 @@ void Get_Set_Parser(int &argc, char *argv[], SICXE_Parser &parser);
 class SICXE_Parser {
 public:
     FILE *fp;
+    string term;
     vector<string> paths;
     vector<SICXE_Source *> sections;
-
+    bool digit;
     SICXE_Parser();
 
     void Read();
@@ -37,6 +38,8 @@ public:
     uint32_t start, end;
 
     SICXE_Source();
+    
+    
 };
 
 // one line of sic/xe with address label mnemonic etc..

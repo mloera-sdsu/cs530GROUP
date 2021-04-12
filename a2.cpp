@@ -10,5 +10,14 @@ int main(int *argc, char *argv[]) {
 
 // read in commands and initialize SICXE_Parser
 void Get_Set_Parser(int &argc, char *argv[], SICXE_Parser &parser) {
-
+    int argument = 1;
+    parser.fp = fopen(argv[argument], "r");
+    if (parser.fp == NULL){
+        cout<<"Cannot open file"<<endl;
+        return;
+    }
+    while(!feof(parser.fp)){
+        parser.Read();
+        
+    }
 }
