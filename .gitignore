@@ -1,0 +1,6 @@
+*.pdf
+!Project2.Fall2021.pdf
+*.exe
+*.o
+.*
+!.gitignore
