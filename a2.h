@@ -23,6 +23,7 @@ public:
     vector<string> paths;
     vector<SICXE_Source *> sections;
     bool digit;
+    bool check;
     SICXE_Parser();
 
     void Read();
@@ -38,6 +39,7 @@ public:
     uint32_t start, end;
 
     SICXE_Source();
+    void Term(string term);
     
     
 };
