@@ -14,7 +14,6 @@ void SICXE_Parser::Read() {
     string line, token, previousToken;
     SICXE_Source curSection;
     SICXE_Instruction curInstruction;
-    curInst
     // for every path
     for (int i = 0;i < paths.size();i++) {
         infile.open(paths.at(i));
@@ -58,7 +57,7 @@ void SICXE_Parser::Read() {
                         }
                     }
                     else if (lineCount == 2){ // ext ref line
-                        
+
                     }
                     else{ // in general
                     //0035 LDX
@@ -99,6 +98,72 @@ int SICXE_Parser::CheckToken(string token, int column, vector<string> defs){
 }
 // writes to a file, might need to pass a string mode parameter to specify type of output file
 void SICXE_Parser::Write() {
+    string filename;
+    string record;
+
+    for (int i = 0; i < sections.size();i++) { // for every section
+        outfile.open(sections.at(i).filename, fstream::out);
+        record += BuildHeaderRecord(i);
+        record += BuildExtDef(i);
+        record += BuildExtRef(i);
+        record += BuildTextRecord(i);
+        record += BuildModRecord(i);
+        outfile.close();
+    }
 
 }
 
+// pass argv raw arg for filepath and return the filename with no extention
+string SICXE_Parser::RemoveFileExtension(string filename) {
+    size_t start,end = 0;
+    start = filename.find_last_of("/");
+    if (start == 0) {
+        start = filename.find_last_of("\\");
+    }
+    end = filename.find_last_of(".");
+    filename = filename.substr(start, end);
+}
+
+string SICXE_Parser::BuildHeaderRecord(int idx) {
+    string headerRecStr;
+    stringstream stream;
+    SICXE_Source section = sections.at(idx);
+
+    headerRecStr += HEADEROBJ;
+    headerRecStr += section.name + SPACE;
+    stream << setfill('0') << setw(ADDR_DIGIT_PLACES) << hex << section.start << section.end << endl;
+    headerRecStr += stream.str();
+    return headerRecStr;
+}
+
+string SICXE_Parser::BuildExtDef(int idx) {
+    string extDefRecStr, tmp;
+    stringstream stream;
+    SICXE_Source section = sections.at(idx);
+    bool found;
+
+    extDefRecStr += EXTDEFOBJ;
+    for (int i = 0;i < section.extdef.size();i++) { // every extdef entry of source
+        tmp = section.extdef.at(i);
+        extDefRecStr += tmp + SPACE;
+        // search for extdef in instructions
+        found = false;
+        for (int j = 0;j < section.instructions.size() && !found;i++) { // every instruction of source
+            if (section.instructions.at(j).label == tmp) {
+                stream << setfill('0') << setw(ADDR_DIGIT_PLACES) << hex << section.instructions.at(j).addr;
+                extDefRecStr += stream.str();
+                stream.clear();
+                found = true;
+            }
+        }
+        if (!found) { // definition never found in section
+            errno = ENXIO;
+            fprintf(stderr, "EXTDEF %s defined but not loaded", tmp);
+            perror("");
+        }
+    }
+}
+
+string SICXE_Parser::BuildExtRef(int idx) {
+
+}
