@@ -85,7 +85,7 @@ void SICXE_Parser::Read() {
                     }
                     else{ // in general
 
-                        if ((isspace(c) && token.size() != 0) || (comma && token.size()!=0)) { // word defining condition for in general
+                        if ((isspace(c) && token.size() != 0) /*|| (comma && token.size()!=0)*/) { // word defining condition for in general
                             if(curInstruction.addr == NULL){
                                 curInstruction.addr = stringToHex(token);
 								token.erase();
@@ -98,9 +98,31 @@ void SICXE_Parser::Read() {
 								curInstruction.mnemonic = token;
 								token.erase();
 							}
-                            else if(curInstruction.args.empty()){ //Check if vector string is empty
-                                //parse string 
-                                
+                            else if(curInstruction.args.empty() /*|| comma*/){ //Check if vector string is empty
+                                if(token.find('+') != std::string::npos || token.find('-') != std::string::npos){ //Check if token has + or -
+                                    //for loop inside?
+                                    
+                                    
+                                    //curInstruction.args.push_back(token)
+
+                                } 
+                                else if(token.find(',') != std::string::npos){ // check if token has comma
+                                    string temp;
+                                    for(int k = 0; k < token.size(); k++){
+                                        if(token[k] != ','){
+                                            temp += token[k];
+                                        }
+                                        else if(token[k] == ','){
+                                            curInstruction.args.push_back(temp);
+                                            temp = "";
+                                        }
+                                    }
+                                    curInstruction.args.push_back(temp);
+                                } 
+                                else{
+                                    curInstruction.args.push_back(token);
+                                }
+                                token.erase();
                             }
                             else if(curInstruction.objcode == NULL && j == line.length()-1){
                                 curInstruction.objcode = stringToHex(token);
