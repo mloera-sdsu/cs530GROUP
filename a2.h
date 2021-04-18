@@ -8,7 +8,6 @@
 #include <stdlib.h>
 #include <fstream>
 #include <sstream>
-#include <algorithm>
 
 #define FIRST_ARG 1
 #define ADDR_COL 0
@@ -41,7 +40,7 @@ private:
     string BuildExtRef(int idx);
     string BuildTextRecord(int idx);
     string BuildModRecord(int idx);
-    void RemoveFileExtension(string &filename);
+    string RemoveFileExtension(string filename);
 };
 
 // source file contents consisting of an array of SICXE_Instruction objects

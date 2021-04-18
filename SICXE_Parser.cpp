@@ -61,20 +61,27 @@ void SICXE_Parser::Write() {
     string filename;
     string record;
 
-    RemoveFileExtension(filename);
     for (int i = 0; i < sections.size();i++) { // for every section
+        outfile.open(sections.at(i).filename, fstream::out);
         record += BuildHeaderRecord(i);
         record += BuildExtDef(i);
         record += BuildExtRef(i);
         record += BuildTextRecord(i);
         record += BuildModRecord(i);
+        outfile.close();
     }
 
 }
 
-void SICXE_Parser::RemoveFileExtension(string &filename) {
-    size_t dotIdx = filename.find_last_of(".");
-    filename = filename.substr(0, dotIdx);
+// pass argv raw arg for filepath and return the filename with no extention
+string SICXE_Parser::RemoveFileExtension(string filename) {
+    size_t start,end = 0;
+    start = filename.find_last_of("/");
+    if (start == 0) {
+        start = filename.find_last_of("\\");
+    }
+    end = filename.find_last_of(".");
+    filename = filename.substr(start, end);
 }
 
 string SICXE_Parser::BuildHeaderRecord(int idx) {
@@ -109,7 +116,7 @@ string SICXE_Parser::BuildExtDef(int idx) {
                 found = true;
             }
         }
-        if(!found) { // definition never found in section
+        if (!found) { // definition never found in section
             errno = ENXIO;
             fprintf(stderr, "EXTDEF %s defined but not loaded", tmp);
             perror("");
