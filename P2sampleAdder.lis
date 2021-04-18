@@ -17,4 +17,4 @@
 07F3    TABLE2   RESW     2000
 0FC3    TOTAL    RESW     1
                  END      ADD
-0FC6    *       =C'EOF'                            454F46
+0FC6    *       =C'EOF'                            454F46    

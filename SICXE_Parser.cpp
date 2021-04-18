@@ -11,6 +11,8 @@ void SICXE_Parser::Read() {
     char c;
     int wordcount, sectionsIdx = 0;
     bool comma;
+    bool extdef_F = false;
+    bool extref_F = false;
     string line, token, previousToken;
     SICXE_Source curSection;
     SICXE_Instruction curInstruction;
@@ -24,6 +26,7 @@ void SICXE_Parser::Read() {
         else { // file by file
             sections.emplace_back(SICXE_Source());
             curSection = sections.back();
+            curSection.filename = RemoveFileExtension(paths.at(i));
             while (getline(infile, line)) { // line by line
                 wordcount = 0;
                 int lineCount = curSection.instructions.size();
@@ -32,42 +35,82 @@ void SICXE_Parser::Read() {
                     c = line.at(j);
                     if(c == ',')
                         comma = true;
+                    
                     if (lineCount==0){ // first line
                         if(isspace(c) && token.size() != 0){// word defining condition for 1st line
                             ++wordcount;
                             if(wordcount == ADDR_COL)
-                                curInstruction.addr = stoul(token);
+                                curInstruction.addr = stringToHex(token);
                             if(wordcount == 2)
                                 curSection.name = token;
                             if(wordcount == 4)
-                                curSection.start = stoul(token);
+                                curSection.start = stringToHex(token);
+                            token.erase();
                         }
                         else if (!isspace(c)) {
-                        token.push_back(c);
+                            token.push_back(c);
                         }
                     }
                     else if (lineCount == 1){ // ext def line
-                        if(comma && token.size()!=0){
+                        if(comma && token.size()!=0 && extdef_F){
                             curSection.extdef.push_back(token);
+                            comma = false;
+                            token.erase();
                         }
                         if(isspace(c) && token.size() != 0){
                             ++wordcount;
-                            if(token.compare("EXTDEF"))
-                                wordcount = 3;
+                            if(token.compare("EXTDEF")) //CHECK IF THIS IS NEEDED
+                                extdef_F = true;
+                            token.erase();
+                        }
+                        else if(!isspace(c)){
+                            token.push_back(c);
                         }
                     }
                     else if (lineCount == 2){ // ext ref line
-
+                        if(comma && token.size()!=0 && extref_F){
+                            curSection.extref.push_back(token);
+                            comma = false;
+                            token.erase();
+                        }
+                        if(isspace(c) && token.size() != 0){
+                            ++wordcount;
+                            if(token.compare("EXTREF")) //CHECK IF THIS IS NEEDED
+                                extref_F = true;
+                            token.erase();
+                        }
+                        else if(!isspace(c)){
+                            token.push_back(c);
+                        }
                     }
                     else{ // in general
-                    //0035 LDX
-                        if (isspace(c) && token.size() != 0) { // word defining condition for in general
-                            //cout << token << endl;
-                            check = true;
-                            //curInstruction.addr = stoul(token);
-                            //wordcount = CheckToken(token, wordcount, curSection.extdef);
+
+                        if ((isspace(c) && token.size() != 0) || (comma && token.size()!=0)) { // word defining condition for in general
+                            if(curInstruction.addr == NULL){
+                                curInstruction.addr = stringToHex(token);
+								token.erase();
+							}
+                            else if(curInstruction.label.compare("NULL") && curInstruction.mnemonic.compare("NULL") /*&& not in dict*/){
+                                curInstruction.label = token;
+								token.erase();
+							}
+                            else if(curInstruction.mnemonic.compare("NULL")){
+								curInstruction.mnemonic = token;
+								token.erase();
+							}
+                            else if(curInstruction.args.empty()){ //Check if vector string is empty
+                                //parse string 
+                                
+                            }
+                            else if(curInstruction.objcode == NULL && j == line.length()-1){
+                                curInstruction.objcode = stringToHex(token);
+                                token.erase();
+							}
+
+							//wordcount = CheckToken(token, wordcount, curSection.extdef);
                             previousToken = token;
                             token.erase(); // token = ""
+                            
                         }
                         else if (!isspace(c)) {
                             token.push_back(c); //0035    LDX
@@ -80,7 +123,13 @@ void SICXE_Parser::Read() {
         }
     }
 }
-
+uint32_t SICXE_Parser::stringToHex(string token){
+    stringstream ss;
+    uint32_t token_Hex;
+    ss<<hex<<token;
+    ss>>token_Hex;
+    return token_Hex;
+}
 int SICXE_Parser::CheckToken(string token, int column, vector<string> defs){
     if(token.compare("START") == 0){
         column = START;
@@ -167,3 +216,4 @@ string SICXE_Parser::BuildExtDef(int idx) {
 string SICXE_Parser::BuildExtRef(int idx) {
 
 }
+

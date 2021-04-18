@@ -40,6 +40,7 @@ public:
     int CheckToken(string token, int column, vector<string> defs);
     void Write();
 private:
+    uint32_t stringToHex(string token);
     string BuildHeaderRecord(int idx);
     string BuildExtDef(int idx);
     string BuildExtRef(int idx);
