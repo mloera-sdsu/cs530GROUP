@@ -8,6 +8,7 @@
 #include <stdlib.h>
 #include <fstream>
 #include <sstream>
+#include <set>
 
 #define FIRST_ARG 1
 #define ADDR_COL 1
@@ -26,6 +27,7 @@
 
 using namespace std;
 
+class SICXE_Dictionary;
 class SICXE_Instruction;
 class SICXE_Source;
 class SICXE_Parser;
@@ -75,4 +77,11 @@ public:
     bool hasEXTREF;
 
     SICXE_Instruction();
+};
+
+class SICXE_Dictionary {
+public:
+    set<string> mnemonics;
+
+    SICXE_Dictionary();
 };
