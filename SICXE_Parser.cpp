@@ -58,6 +58,65 @@ void SICXE_Parser::Read() {
 
 // writes to a file, might need to pass a string mode parameter to specify type of output file
 void SICXE_Parser::Write() {
+    string filename;
+    string record;
+
+    RemoveFileExtension(filename);
+    for (int i = 0; i < sections.size();i++) { // for every section
+        record += BuildHeaderRecord(i);
+        record += BuildExtDef(i);
+        record += BuildExtRef(i);
+        record += BuildTextRecord(i);
+        record += BuildModRecord(i);
+    }
 
 }
 
+void SICXE_Parser::RemoveFileExtension(string &filename) {
+    size_t dotIdx = filename.find_last_of(".");
+    filename = filename.substr(0, dotIdx);
+}
+
+string SICXE_Parser::BuildHeaderRecord(int idx) {
+    string headerRecStr;
+    stringstream stream;
+    SICXE_Source section = sections.at(idx);
+
+    headerRecStr += HEADEROBJ;
+    headerRecStr += section.name + SPACE;
+    stream << setfill('0') << setw(ADDR_DIGIT_PLACES) << hex << section.start << section.end << endl;
+    headerRecStr += stream.str();
+    return headerRecStr;
+}
+
+string SICXE_Parser::BuildExtDef(int idx) {
+    string extDefRecStr, tmp;
+    stringstream stream;
+    SICXE_Source section = sections.at(idx);
+    bool found;
+
+    extDefRecStr += EXTDEFOBJ;
+    for (int i = 0;i < section.extdef.size();i++) { // every extdef entry of source
+        tmp = section.extdef.at(i);
+        extDefRecStr += tmp + SPACE;
+        // search for extdef in instructions
+        found = false;
+        for (int j = 0;j < section.instructions.size() && !found;i++) { // every instruction of source
+            if (section.instructions.at(j).label == tmp) {
+                stream << setfill('0') << setw(ADDR_DIGIT_PLACES) << hex << section.instructions.at(j).addr;
+                extDefRecStr += stream.str();
+                stream.clear();
+                found = true;
+            }
+        }
+        if(!found) { // definition never found in section
+            errno = ENXIO;
+            fprintf(stderr, "EXTDEF %s defined but not loaded", tmp);
+            perror("");
+        }
+    }
+}
+
+string SICXE_Parser::BuildExtRef(int idx) {
+
+}
