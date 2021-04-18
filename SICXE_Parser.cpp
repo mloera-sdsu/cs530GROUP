@@ -33,9 +33,9 @@ void SICXE_Parser::Read() {
                 curInstruction = SICXE_Instruction();
                 for (int j = 0;line.at(j);j++) { // char by char
                     c = line.at(j);
-                    if(c == ',')
+                    if (c == ',')
                         comma = true;
-                    
+
                     if (lineCount==0){ // first line
                         if(isspace(c) && token.size() != 0){// word defining condition for 1st line
                             ++wordcount;
@@ -57,7 +57,7 @@ void SICXE_Parser::Read() {
                             comma = false;
                             token.erase();
                         }
-                        if(isspace(c) && token.size() != 0){
+                        if (isspace(c) && token.size() != 0) {
                             ++wordcount;
                             if(token.compare("EXTDEF")) //CHECK IF THIS IS NEEDED
                                 extdef_F = true;
@@ -101,11 +101,11 @@ void SICXE_Parser::Read() {
                             else if(curInstruction.args.empty() /*|| comma*/){ //Check if vector string is empty
                                 if(token.find('+') != std::string::npos || token.find('-') != std::string::npos){ //Check if token has + or -
                                     //for loop inside?
-                                    
-                                    
+
+
                                     //curInstruction.args.push_back(token)
 
-                                } 
+                                }
                                 else if(token.find(',') != std::string::npos){ // check if token has comma
                                     string temp;
                                     for(int k = 0; k < token.size(); k++){
@@ -118,7 +118,7 @@ void SICXE_Parser::Read() {
                                         }
                                     }
                                     curInstruction.args.push_back(temp);
-                                } 
+                                }
                                 else{
                                     curInstruction.args.push_back(token);
                                 }
@@ -132,7 +132,7 @@ void SICXE_Parser::Read() {
 							//wordcount = CheckToken(token, wordcount, curSection.extdef);
                             previousToken = token;
                             token.erase(); // token = ""
-                            
+
                         }
                         else if (!isspace(c)) {
                             token.push_back(c); //0035    LDX
@@ -156,13 +156,13 @@ int SICXE_Parser::CheckToken(string token, int column, vector<string> defs){
     if(token.compare("START") == 0){
         column = START;
     }
-    else if(token.compare("EXTDEF") == 0){
+    else if (token.compare("EXTDEF") == 0) {
         column = EXTDEF;
     }
-    else if(token.compare("EXTREF") == 0){
+    else if (token.compare("EXTREF") == 0) {
         column = EXTREF;
     }
-    else if(column == 0 && token.compare("END") != 0){
+    else if (column == 0 && token.compare("END") != 0) {
         column = ADDR_COL;
     }
     return column;
@@ -181,12 +181,11 @@ void SICXE_Parser::Write() {
         record += BuildModRecord(i);
         outfile.close();
     }
-
 }
 
 // pass argv raw arg for filepath and return the filename with no extention
 string SICXE_Parser::RemoveFileExtension(string filename) {
-    size_t start,end = 0;
+    size_t start, end = 0;
     start = filename.find_last_of("/");
     if (start == 0) {
         start = filename.find_last_of("\\");
@@ -220,7 +219,7 @@ string SICXE_Parser::BuildExtDef(int idx) {
         // search for extdef in instructions
         found = false;
         for (int j = 0;j < section.instructions.size() && !found;i++) { // every instruction of source
-            if (section.instructions.at(j).label == tmp) {
+            if (section.instructions.at(j).label == tmp && section.instructions.at(j).mnemonic == "EQU") {
                 stream << setfill('0') << setw(ADDR_DIGIT_PLACES) << hex << section.instructions.at(j).addr;
                 extDefRecStr += stream.str();
                 stream.clear();
@@ -233,9 +232,55 @@ string SICXE_Parser::BuildExtDef(int idx) {
             perror("");
         }
     }
+    return extDefRecStr + "\n";
 }
 
 string SICXE_Parser::BuildExtRef(int idx) {
+    string extRefRecStr;
+    SICXE_Source section = sections.at(idx);
 
+    extRefRecStr += EXTREFOBJ;
+    for (int i = 0;i < section.extref.size();i++)
+        extRefRecStr += section.extref.at(i) + SPACE;
+    return extRefRecStr + "\n";
+}
+// every 16 bytes (2 hex digits per byte)
+string SICXE_Parser::BuildTextRecord(int idx) {
+    string textRecStr, byteLength;
+    stringstream stream;
+    SICXE_Source section = sections.at(idx);
+    size_t idxForLength;
+    int digitPlaces, bytecount;
+    bool isOverLimit;
+
+    for (int i = 0;i < section.instructions.size();i++) {
+        if (isOverLimit) {
+            bytecount = 0;
+            isOverLimit = false;
+            textRecStr += TEXTOBJ;
+            stream << setfill('0') << setw(ADDR_DIGIT_PLACES) << hex << section.start;
+            textRecStr += stream.str();
+            stream.clear();
+            idxForLength = textRecStr.size();
+        }
+        else {
+            digitPlaces = ADDR_DIGIT_PLACES;
+            if (section.instructions.at(i).mnemonic.find('+') != string::npos) // extended
+                digitPlaces = EXT_ADDR_DIGIT_PLACES;
+
+            if (bytecount + digitPlaces / 2 > TEXTREC_BYTE_LIMIT) {// check byte limit
+                stream << hex << bytecount;
+                textRecStr.insert(idxForLength, stream.str());
+                stream.clear();
+                isOverLimit = true;
+                i--;
+            }
+            else { // within byte limit, add objcode
+                bytecount += digitPlaces / 2;
+                stream << setfill('0') << setw(digitPlaces) << hex << section.instructions.at(i).objcode;
+                stream.clear();
+            }
+        }
+    }
 }
 

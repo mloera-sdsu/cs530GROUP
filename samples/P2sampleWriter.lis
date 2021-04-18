@@ -1,3 +1,4 @@
+.  SOURCE CODE FOR THE XE VERSION OF THE SIC FAMILY OF COMPUTERS
 0000    WRITE    START    0      .SAMPLE PROGRAM
 0000             EXTDEF   LEN
 0000             EXTREF   COUNT,TABLE,TABLE2
@@ -13,6 +14,6 @@
 001C            +STA      TOTAL                    0F100003
 0020             LDT      TOTAL                    772000
 0023    TOTAL    RESW     1
-0026    LEN      WORD     X'02C
+0026    LEN      WORD     X'02C                    00002C
                  END
 0029    *       =C'EOF'                            454F46
