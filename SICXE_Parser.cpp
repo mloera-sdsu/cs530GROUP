@@ -36,7 +36,7 @@ void SICXE_Parser::Read() {
                     if (isspace(c) && token.size() != 0) {
                         //cout << token << endl;
                         check = true;
-                        wordcount = CheckToken(token, wordcount);
+                        wordcount = CheckToken(token, wordcount, curSection.extdef);
                         switch (wordcount) {
                             case ADDR_COL:
                                 curInstruction.addr = stoi(token);
