@@ -6,6 +6,11 @@
 #include <iomanip>
 #include <math.h>
 #include <stdlib.h>
+#include <fstream>
+#include <sstream>
+
+#define FIRST_ARG 1
+#define ADDR_COL 0
 
 using namespace std;
 
@@ -18,14 +23,12 @@ void Get_Set_Parser(int &argc, char *argv[], SICXE_Parser &parser);
 // does all the io stuff and uses SICXE classes to store data
 class SICXE_Parser {
 public:
-    FILE *fp;
-    string term;
+    ifstream infile;\
     vector<string> paths;
-    vector<SICXE_Source *> sections;
-    bool digit;
-    bool check;
-    SICXE_Parser();
+    vector<SICXE_Source> sections;
 
+    SICXE_Parser();
+    SICXE_Parser(int &argc, char *argv[]);
     void Read();
     void Write();
 };
@@ -35,13 +38,13 @@ class SICXE_Source {
 public:
     string name;
     vector<string> extdef, extref;
-    vector<SICXE_Instruction *> instructions;
+    vector<SICXE_Instruction> instructions;
     uint32_t start, end;
 
     SICXE_Source();
     void Term(string term);
-    
-    
+
+
 };
 
 // one line of sic/xe with address label mnemonic etc..
@@ -51,6 +54,7 @@ public:
     uint32_t addr, objcode;
     string label, mnemonic;
     vector<string>args;
+    bool hasEXTREF;
 
     SICXE_Instruction();
 };
