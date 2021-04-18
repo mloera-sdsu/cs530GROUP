@@ -10,11 +10,11 @@ SICXE_Parser::SICXE_Parser(int &argc, char *argv[]) {
 void SICXE_Parser::Read() {
     char c;
     int wordcount, sectionsIdx = 0;
-    bool check;
+    bool comma;
     string line, token, previousToken;
     SICXE_Source curSection;
     SICXE_Instruction curInstruction;
-
+    curInst
     // for every path
     for (int i = 0;i < paths.size();i++) {
         infile.open(paths.at(i));
@@ -27,80 +27,55 @@ void SICXE_Parser::Read() {
             curSection = sections.back();
             while (getline(infile, line)) { // line by line
                 wordcount = 0;
-                curSection.instructions.emplace_back(SICXE_Instruction());
-                curInstruction = curSection.instructions.back();
-
+                int lineCount = curSection.instructions.size();
+                curInstruction = SICXE_Instruction();
                 for (int j = 0;line.at(j);j++) { // char by char
                     c = line.at(j);
-
-                    if (isspace(c) && token.size() != 0) {
-                        //cout << token << endl;
-                        check = true;
-                        wordcount = CheckToken(token, wordcount, curSection.extdef);
-                        switch (wordcount) {
-                            case ADDR_COL:
-                                curInstruction.addr = stoi(token);
-                                break;
-                            case START:
-                                curSection.name = previousToken;
-                                token.erase();
-                                while(isspace(c)){
-                                    j++;
-                                    c = line.at(j);
-                                }
-                                while(!isspace(c)){
-                                    token.push_back(c);
-                                    ++j;
-                                    c = line.at(j);
-                                }
-                                curSection.start = stoi(token);
-                                break;
-                            case EXTDEF:
-                                token.erase();
-                                while(isspace(c)){
-                                    ++j;
-                                    c = line.at(j);
-                                }
-                                while(!isspace(c)){
-                                    token.push_back(c);
-                                    ++j;
-                                    c = line.at(j);
-                                    if(c == ','){
-                                        curSection.extdef.push_back(token);
-                                        token.erase();
-                                        ++j;
-                                        c = line.at(j);
-                                    }
-                                }
-                                break;
-                            case EXTREF:
-                                token.erase();
-                                while(isspace(c)){
-                                    ++j;
-                                    c = line.at(j);
-                                }
-                                while(!isspace(c)){
-                                    token.push_back(c);
-                                    ++j;
-                                    c = line.at(j);
-                                    if(c == ','){
-                                        curSection.extref.push_back(token);
-                                        token.erase();
-                                        ++j;
-                                        c = line.at(j);
-                                    }
-                                }
-                            default:
-                                break;
-
+                    if(c == ',')
+                        comma = true;
+                    if (lineCount==0){ // first line
+                        if(isspace(c) && token.size() != 0){// word defining condition for 1st line
+                            ++wordcount;
+                            if(wordcount == ADDR_COL)
+                                curInstruction.addr = stoul(token);
+                            if(wordcount == 2)
+                                curSection.name = token;
+                            if(wordcount == 4)
+                                curSection.start = stoul(token);
                         }
-                        previousToken = token;
-                        token.erase();
-                    }
-                    else if (!isspace(c)) {
+                        else if (!isspace(c)) {
                         token.push_back(c);
+                        }
+                    }
+                    else if (lineCount == 1){ // ext def line
+                        if(comma && token.size()!=0){
+                            curSection.extdef.push_back(token);
+                        }
+                        if(isspace(c) && token.size() != 0){
+                            ++wordcount;
+                            if(token.compare("EXTDEF"))
+                                wordcount = 3;
+                        }
+                    }
+                    else if (lineCount == 2){ // ext ref line
+                        
+                    }
+                    else{ // in general
+                    //0035 LDX
+                        if (isspace(c) && token.size() != 0) { // word defining condition for in general
+                            //cout << token << endl;
+                            check = true;
+                            //curInstruction.addr = stoul(token);
+                            //wordcount = CheckToken(token, wordcount, curSection.extdef);
+                            previousToken = token;
+                            token.erase(); // token = ""
+                        }
+                        else if (!isspace(c)) {
+                            token.push_back(c); //0035    LDX
+                        }
                     }
                 }
+                curSection.instructions.emplace_back(curInstruction);
             }
             sectionsIdx++;
         }
