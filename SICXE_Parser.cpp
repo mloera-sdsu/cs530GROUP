@@ -98,26 +98,58 @@ void SICXE_Parser::Read() {
 								curInstruction.mnemonic = token;
 								token.erase();
 							}
-                            else if(curInstruction.args.empty() /*|| comma*/){ //Check if vector string is empty
-                                if(token.find('+') != std::string::npos || token.find('-') != std::string::npos){ //Check if token has + or -
-                                    //for loop inside?
+                            else if(curInstruction.args.empty()){ //Check if vector string is empty
+                                if(token.find('+') != string::npos || token.find('-') != string::npos){ //Check if token has + or -
 
+                                    //Handle parenthesis first 
+                                    //Change arithmtic if '-' outside parenthesis
+                                    //remove parenthesis
+                                    bool parenthesis = false;
+                                    if(token.find('(') != string::npos || token.find(')') != string::npos){
+                                        for(int q = 0; q < token.size() - 1; q++){
+                                            if (token[q] == '(' && token[q - 1] == '-'){
+                                                parenthesis == true;
+                                            } else if(token[q] == ')'){
+                                                parenthesis == false;
+                                            }
 
-                                    //curInstruction.args.push_back(token)
-
-                                }
-                                else if(token.find(',') != std::string::npos){ // check if token has comma
-                                    string temp;
-                                    for(int k = 0; k < token.size(); k++){
-                                        if(token[k] != ','){
-                                            temp += token[k];
+                                            if ((token[q] == '-') && parenthesis == true){
+                                                token[q] == '+';
+                                            } else if((token[q] == '+') && parenthesis == true){
+                                                token[q] == '-';
+                                            }
                                         }
-                                        else if(token[k] == ','){
-                                            curInstruction.args.push_back(temp);
-                                            temp = "";
+                                        token.erase(remove(token.begin(), token.end(), '('), token.end());
+                                        token.erase(remove(token.begin(), token.end(), ')'), token.end());
+                                    }
+
+                                    //Seperate args based on +/- and add them to vector
+                                    string tempPlusMinus;
+
+                                    for (int k = 0; k < token.size() - 1; k++){
+                                        if(token[k] == '+' || token[k] == '-'){
+                                            curInstruction.args.push_back(tempPlusMinus);
+                                            tempPlusMinus = "";
+                                            tempPlusMinus += token[k];
+                                        } else{
+                                            tempPlusMinus += token[k];
                                         }
                                     }
-                                    curInstruction.args.push_back(temp);
+                                    curInstruction.args.push_back(tempPlusMinus);
+                                    token.erase();
+                                }
+                                else if(token.find(',') != std::string::npos){ // check if token has comma
+                                    string tempComma;
+                                    for(int m = 0; m < token.size() - 1; m++){
+                                        if(token[m] != ','){
+                                            tempComma += token[m];
+                                        }
+                                        else if(token[m] == ','){
+                                            curInstruction.args.push_back(tempComma);
+                                            tempComma = "";
+                                        }
+                                    }
+                                    curInstruction.args.push_back(tempComma);
                                 }
                                 else{
                                     curInstruction.args.push_back(token);
