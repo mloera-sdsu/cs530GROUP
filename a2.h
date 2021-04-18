@@ -17,8 +17,12 @@
 #define EXTREF 4
 #define HEADEROBJ 'H'
 #define EXTDEFOBJ 'D'
+#define EXTREFOBJ 'R'
+#define TEXTOBJ 'T'
+#define TEXTREC_BYTE_LIMIT 16
 #define SPACE ' '
 #define ADDR_DIGIT_PLACES 6
+#define EXT_ADDR_DIGIT_PLACES 8
 
 using namespace std;
 
