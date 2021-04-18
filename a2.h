@@ -10,7 +10,11 @@
 #include <sstream>
 
 #define FIRST_ARG 1
-#define ADDR_COL 0
+#define ADDR_COL 1
+#define SECOND_COL 2
+#define START 0 
+#define EXTDEF 3
+#define EXTREF 4
 
 using namespace std;
 
@@ -30,6 +34,7 @@ public:
     SICXE_Parser();
     SICXE_Parser(int &argc, char *argv[]);
     void Read();
+    int CheckToken(string token, int column, vector<string> defs);
     void Write();
 };
 
