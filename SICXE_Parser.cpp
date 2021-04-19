@@ -18,9 +18,9 @@ void SICXE_Parser::Read() {
     string line, token, previousToken;
     SICXE_Source curSection;
     SICXE_Instruction curInstruction;
-	SICXE_Dictionary mnemonicsDictionary;
-	// for every path
-	for (int i = 0;i < paths.size();i++) {
+    SICXE_Dictionary mnemonicsDictionary;
+    // for every path
+    for (int i = 0;i < paths.size();i++) {
         infile.open(paths.at(i));
         if (!infile.good()) {
             errno = ENOENT;
@@ -87,15 +87,15 @@ void SICXE_Parser::Read() {
                             token.push_back(c);
                         }
                     }
-                    else{ // in general
-						if ((isspace(c) && token.size() != 0)) { // word defining condition for in general
-                        	if (mnemonicsDictionary.mnemonics.count(token) > 0U){ //check if token is in dictionary
+                    else { // in general
+                        if ((isspace(c) && token.size() != 0)) { // word defining condition for in general
+                            if (mnemonicsDictionary.mnemonics.count(token) > 0U) { //check if token is in dictionary
                                 inDictionary = true;
-							}
+                            }
 
-                            if(token.compare("END") == 0 || end){ //First checks for "END"
-                                for(int i=0; i<curSection.instructions.size();++i){
-                                    if(token.compare(curSection.instructions[i].label) == 0){ //Checks all labels to grab address
+                            if (token.compare("END") == 0 || end) { //First checks for "END"
+                                for (int i = 0; i < curSection.instructions.size();++i) {
+                                    if (token.compare(curSection.instructions[i].label) == 0) { //Checks all labels to grab address
                                         curInstruction.addr = curSection.instructions[i].addr;
                                     }
                                 }
@@ -104,20 +104,20 @@ void SICXE_Parser::Read() {
                                 end = true;
                                 continue; //Move on to name after "END", end is false if next line
                             }
-                            else if(curInstruction.addr == NULL){        //Handles adding addr token
+                            else if (curInstruction.addr == NULL) {        //Handles adding addr token
                                 curInstruction.addr = stringToHex(token);
-								token.erase();
-							}
-                            else if(curInstruction.label.compare("NULL") && curInstruction.mnemonic.compare("NULL") && !inDictionary){ //handles adding label token
+                                token.erase();
+                            }
+                            else if (curInstruction.label.compare("NULL") && curInstruction.mnemonic.compare("NULL") && !inDictionary) { //handles adding label token
                                 curInstruction.label = token;
-								token.erase();
-							}
-                            else if(curInstruction.mnemonic.compare("NULL")){ //Handles adding mnemonic token
-								curInstruction.mnemonic = token;
-								token.erase();
-							}
-                            else if(curInstruction.args.empty()){ //Handles adding args (1st section if +/-)(2nd section if ',')(3rd if jusst token)
-                                if(token.find('+') != string::npos || token.find('-') != string::npos){ //Check if token has + or -
+                                token.erase();
+                            }
+                            else if (curInstruction.mnemonic.compare("NULL")) { //Handles adding mnemonic token
+                                curInstruction.mnemonic = token;
+                                token.erase();
+                            }
+                            else if (curInstruction.args.empty()) { //Handles adding args (1st section if +/-)(2nd section if ',')(3rd if jusst token)
+                                if (token.find('+') != string::npos || token.find('-') != string::npos) { //Check if token has + or -
 
                                     //Handle parenthesis first
                                     //Change arithmtic if '-' outside parenthesis
@@ -160,7 +160,7 @@ void SICXE_Parser::Read() {
                                     token.erase();
                                 }
                                 // Checks if token has comma and seperates and adds them to args
-                                else if(token.find(',') != std::string::npos){
+                                else if (token.find(',') != std::string::npos) {
                                     string tempComma;
                                     for (int m = 0; m < token.size() - 1; m++) {
                                         if (token[m] != ',') {
@@ -178,10 +178,10 @@ void SICXE_Parser::Read() {
                                 }
                                 token.erase();
                             }
-                            else if(curInstruction.objcode == NULL && j == line.length()-1){ //Handles adding object code tokens
+                            else if (curInstruction.objcode == NULL && j == line.length() - 1) { //Handles adding object code tokens
                                 curInstruction.objcode = stringToHex(token);
                                 token.erase();
-							}
+                            }
                             previousToken = token;
                             token.erase(); // token = ""
 
@@ -286,15 +286,18 @@ string SICXE_Parser::BuildTextRecord(int idx) {
     string textRecStr;
     stringstream stream;
     SICXE_Source section = sections.at(idx);
+    SICXE_Instruction curInstruction;
     size_t idxForLength;
-    int digitPlaces, bytecount;
+    int digitPlaces, bytecount, totalInstructions;
     uint32_t addrcount;
     bool isOverLimit = true;
 
     addrcount = section.start;
     bytecount = 0;
-    for (int i = 0;i < section.instructions.size();i++) {
-        if (isOverLimit) {// starts at overlimit to set new TextRecord line
+    totalInstructions = section.instructions.size();
+    for (int i = 0;i < totalInstructions;i++) {
+        curInstruction = section.instructions.at(i);
+        if (isOverLimit) {// starts at overlimit true to set new TextRecord line
             addrcount += bytecount;
             bytecount = 0;
             isOverLimit = false;
@@ -306,22 +309,22 @@ string SICXE_Parser::BuildTextRecord(int idx) {
         }
         // when in middle of parsing objcodes within limit of 16 bytes
         digitPlaces = ADDR_DIGIT_PLACES;
-        if (section.instructions.at(i).mnemonic.find('+') != string::npos) // extended addressing case
+        if (curInstruction.mnemonic.find('+') != string::npos) // extended addressing case
             digitPlaces = EXT_ADDR_DIGIT_PLACES;
 
-        if (bytecount + digitPlaces / 2 > TEXTREC_BYTE_LIMIT || i == section.instructions.size() - 1) {// check if surpassed byte limit or last instruction
+        if (bytecount + digitPlaces / 2 > TEXTREC_BYTE_LIMIT || i == totalInstructions - 1) {// check if surpassed byte limit or last instruction
             stream << hex << bytecount;
             textRecStr.insert(idxForLength, stream.str());
             textRecStr += "\n";
             stream.clear();
             isOverLimit = true;
 
-            if (i != section.instructions.size() - 1)
+            if (i != totalInstructions - 1)
                 i--;
         }
         else { // within byte limit, add objcode
             bytecount += digitPlaces / 2;
-            stream << setfill('0') << setw(digitPlaces) << hex << section.instructions.at(i).objcode;
+            stream << setfill('0') << setw(digitPlaces) << hex << curInstruction.objcode;
             textRecStr += stream.str();
             stream.clear();
         }
