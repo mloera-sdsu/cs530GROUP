@@ -214,7 +214,6 @@ void SICXE_Parser::Read() {
                                     for (int i = 0; i < curSection.instructions.size();++i) {
                                         if (token.compare(curSection.instructions[i].label) == 0) { //Checks all labels to grab address
                                             curInstruction.addr = curSection.instructions[i].addr;
-                                            
                                             end = false;
                                         }
                                     }
@@ -340,7 +339,7 @@ string SICXE_Parser::SymTabDefs(SICXE_Source section, uint32_t start) {
             if (section.instructions.at(j).label == tmp) {
                 
                 location = start + section.instructions.at(j).addr;
-                printf("%X," section.instructions.at(j).addr);
+                
                 write << setfill(SPACE) << setw(8) << "";
                 extDefStr += write.str();
                 write.str("");
