@@ -1,4 +1,4 @@
-0000    WRITE    START    0      .SAMPLE PROGRAM
+0000    WRITE    START    0
 0000             EXTDEF   LEN
 0000             EXTREF   COUNT,TABLE,TABLE2
 0000    FIRST    LDX     #10                       05000A

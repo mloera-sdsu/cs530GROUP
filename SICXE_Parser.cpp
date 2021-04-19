@@ -27,14 +27,13 @@ void SICXE_Parser::Read() {
             perror("File path error");
         }
         else { // file by file
-            sections.emplace_back(SICXE_Source());
-            curSection = sections.back();
+            curSection = SICXE_Source();
             curSection.filename = RemoveFileExtension(paths.at(i));
             while (getline(infile, line)) { // line by line
                 wordcount = 0;
                 int lineCount = curSection.instructions.size();
                 curInstruction = SICXE_Instruction();
-                for (int j = 0;line.at(j);j++) { // char by char
+                for (int j = 0;j < line.size();j++) { // char by char
 
                     c = line.at(j);
                     if (c == ',')
@@ -49,77 +48,99 @@ void SICXE_Parser::Read() {
                                 curSection.name = token;
                             if (wordcount == 4)
                                 curSection.start = stringToHex(token);
-                            token.erase();
+                            token.clear();
                         }
                         else if (!isspace(c)) {
                             token.push_back(c);
+                            if (j == line.size() - 1) {
+                                wordcount++;
+                                if (wordcount == 4)
+                                    curSection.start = stringToHex(token);
+                                token.clear();
+                            }
                         }
                     }
                     else if (lineCount == 1) { // ext def line
                         if (comma && token.size() != 0 && extdef_F) {
                             curSection.extdef.push_back(token);
                             comma = false;
-                            token.erase();
+                            token.clear();
                         }
-                        if (isspace(c) && token.size() != 0) {
+                        else if (isspace(c) && token.size() != 0) {
                             ++wordcount;
-                            if (token.compare("EXTDEF")) //CHECK IF THIS IS NEEDED
+                            if (token == "EXTDEF") //CHECK IF THIS IS NEEDED
                                 extdef_F = true;
-                            token.erase();
+                            if (wordcount == ADDR_COL)
+                                curInstruction.addr = stringToHex(token);
+                            token.clear();
                         }
                         else if (!isspace(c)) {
                             token.push_back(c);
+                            if (j == line.size() - 1) {
+                                if (token.size() != 0 && extdef_F) {
+                                    curSection.extdef.push_back(token);
+                                    token.clear();
+                                }
+                            }
                         }
                     }
                     else if (lineCount == 2) { // ext ref line
                         if (comma && token.size() != 0 && extref_F) {
                             curSection.extref.push_back(token);
                             comma = false;
-                            token.erase();
+                            token.clear();
                         }
                         if (isspace(c) && token.size() != 0) {
                             ++wordcount;
-                            if (token.compare("EXTREF")) //CHECK IF THIS IS NEEDED
+                            if (token == "EXTREF") //CHECK IF THIS IS NEEDED
                                 extref_F = true;
-                            token.erase();
+                            token.clear();
                         }
                         else if (!isspace(c)) {
                             token.push_back(c);
+                            if (j == line.size() - 1) {
+                                if (token.size() != 0 && extref_F) {
+                                    curSection.extref.push_back(token);
+                                    token.clear();
+                                }
+                            }
                         }
                     }
                     else { // in general
                         if ((isspace(c) && token.size() != 0)) { // word defining condition for in general
-                            if (mnemonicsDictionary.mnemonics.count(token) > 0U) { //check if token is in dictionary
-                                inDictionary = true;
-                            }
+                            wordcount++;
 
-                            if (token.compare("END") == 0 || end) { //First checks for "END"
-                                if (token.compare("END") == 0)
+                            if (token == "END" || end) { //First checks for "END"
+                                if (token == "END")
                                     curInstruction.mnemonic = token;
                                 for (int i = 0; i < curSection.instructions.size();++i) {
                                     if (token.compare(curSection.instructions[i].label) == 0) { //Checks all labels to grab address
                                         curInstruction.addr = curSection.instructions[i].addr;
                                     }
                                 }
-
-                                token.erase();
+                                token.clear();
                                 end = true;
-                                continue; //Move on to name after "END", end is false if next line
                             }
-                            else if (curInstruction.addr == NULL) {        //Handles adding addr token
+                            if (wordcount == ADDR_COL) {        //Handles adding addr token
                                 curInstruction.addr = stringToHex(token);
-                                token.erase();
+                                token.clear();
                             }
-                            else if (curInstruction.label.compare("NULL") && curInstruction.mnemonic.compare("NULL") && !inDictionary) { //handles adding label token
-                                curInstruction.label = token;
-                                token.erase();
+                            else if (wordcount == SECOND_COL) { //handles adding label token
+                                if (mnemonicsDictionary.mnemonics.count(token)) {  //check if token is in dictionary
+                                    curInstruction.mnemonic = token;
+                                    wordcount++;
+                                }
+                                else
+                                    curInstruction.label = token;
+                                token.clear();
                             }
-                            else if (curInstruction.mnemonic.compare("NULL")) { //Handles adding mnemonic token
+                            else if (wordcount == THIRD_COL) { //Handles adding mnemonic token
                                 curInstruction.mnemonic = token;
-                                token.erase();
+                                token.clear();
                             }
                             else if (curInstruction.args.empty()) { //Handles adding args (1st section if +/-)(2nd section if ',')(3rd if jusst token)
                                 if (token.find('+') != string::npos || token.find('-') != string::npos) { //Check if token has + or -
+                                    string tempPlusMinus; //Seperate args based on +/- and add them to vector
 
                                     //Handle parenthesis first
                                     //Change arithmtic if '-' outside parenthesis
@@ -127,28 +148,25 @@ void SICXE_Parser::Read() {
                                     bool parenthesis = false;
                                     if (token.find('(') != string::npos || token.find(')') != string::npos) {
                                         for (int q = 0; q < token.size() - 1; q++) {
-                                            if (token[q] == '(' && token[q - 1] == '-') {
-                                                parenthesis == true;
+                                            if (token[q + 1] == '(' && token[q] == '-') {
+                                                parenthesis = true;
+                                                q += 2;
                                             }
                                             else if (token[q] == ')') {
-                                                parenthesis == false;
+                                                parenthesis = false;
                                             }
 
                                             if ((token[q] == '-') && parenthesis == true) {
-                                                token[q] == '+';
+                                                token[q] = '+';
                                             }
                                             else if ((token[q] == '+') && parenthesis == true) {
-                                                token[q] == '-';
+                                                token[q] = '-';
                                             }
                                         }
                                         token.erase(remove(token.begin(), token.end(), '('), token.end());
                                         token.erase(remove(token.begin(), token.end(), ')'), token.end());
                                     }
-
-                                    //Seperate args based on +/- and add them to vector
-                                    string tempPlusMinus;
-
-                                    for (int k = 0; k < token.size() - 1; k++) {
+                                    for (int k = 0; k < token.size(); k++) {
                                         if (token[k] == '+' || token[k] == '-') {
                                             curInstruction.args.push_back(tempPlusMinus);
                                             tempPlusMinus = "";
@@ -159,12 +177,12 @@ void SICXE_Parser::Read() {
                                         }
                                     }
                                     curInstruction.args.push_back(tempPlusMinus);
-                                    token.erase();
+                                    token.clear();
                                 }
                                 // Checks if token has comma and seperates and adds them to args
                                 else if (token.find(',') != std::string::npos) {
                                     string tempComma;
-                                    for (int m = 0; m < token.size() - 1; m++) {
+                                    for (int m = 0; m < token.size(); m++) {
                                         if (token[m] != ',') {
                                             tempComma += token[m];
                                         }
@@ -178,35 +196,45 @@ void SICXE_Parser::Read() {
                                 else {
                                     curInstruction.args.push_back(token);
                                 }
-                                token.erase();
+                                token.clear();
                             }
                             else if (curInstruction.objcode == NULL && j == line.length() - 1) { //Handles adding object code tokens
                                 curInstruction.objcode = stringToHex(token);
-                                token.erase();
+                                token.clear();
                             }
                             previousToken = token;
-                            token.erase(); // token = ""
+                            token.clear(); // token = ""
 
                         }
                         else if (!isspace(c)) {
                             token.push_back(c); //0035    LDX
+                            if (j == line.size() - 1) {
+                                wordcount++;
+                                if (curInstruction.args.empty())
+                                    curInstruction.args.push_back(token);
+                                else if (wordcount == OBJCODE_COL)
+                                    curInstruction.objcode = stringToHex(token);
+                                token.clear();
+                            }
                         }
                     }
                 }
                 curSection.instructions.emplace_back(curInstruction);
             }
+            //Find end address
+            int sizeOfVector = curSection.instructions.size();
+            if (curSection.instructions.at(sizeOfVector - 1).mnemonic == "END") { //Check if the last instruction is END
+                curSection.end = curSection.instructions.at(sizeOfVector - 2).addr; //Get address of instruction before END
+                curSection.end += 3;
+            }
+            else {
+                curSection.end = curSection.instructions.at(sizeOfVector - 1).addr; //Last instruction address
+                curSection.end += 3;
+            }
+            sections.emplace_back(curSection);
             sectionsIdx++;
         }
-        //Find end address
-        int sizeOfVector = curSection.instructions.size();
-        if (curSection.instructions.at(sizeOfVector - 1).mnemonic.compare("END") == 0) { //Check if the last instruction is END
-            curSection.end = curSection.instructions.at(sizeOfVector - 2).addr; //Get address of instruction before END
-            curSection.end += 3;
-        }
-        else {
-            curSection.end = curSection.instructions.at(sizeOfVector).addr; //Last instruction address
-            curSection.end += 3;
-        }
+
     }
 }
 uint32_t SICXE_Parser::stringToHex(string token) {
@@ -270,13 +298,13 @@ string SICXE_Parser::SymTabSections(string s_name, uint32_t s_start, uint32_t le
     string record;
     write << setfill(SPACE) << setw(8) << s_name;
     record += write.str();
-    write.clear();
+    write.str("");
     write << setfill(SPACE) << setw(8) << hex << s_start;
     record += write.str();
-    write.clear();
+    write.str("");
     write << setfill(SPACE) << setw(8) << hex << length << endl;
     record += write.str();
-    write.clear();
+    write.str("");
     return record;
 }
 string SICXE_Parser::SymTabDefs(SICXE_Source section, uint32_t start) {
@@ -284,23 +312,23 @@ string SICXE_Parser::SymTabDefs(SICXE_Source section, uint32_t start) {
     stringstream write;
     uint32_t location;
     bool found;
-    for (int i = 0; i < section.extdef.size(); ++i) {
+    for (int i = 0; i < section.extdef.size(); i++) {
         tmp = section.extdef.at(i) + SPACE;
         extDefStr = "";
         // search for extdef in instructions
         found = false;
-        for (int j = 0;j < section.instructions.size() && !found;i++) { // every instruction of source
-            if (section.instructions.at(j).label == tmp && section.instructions.at(j).mnemonic == "EQU") {
-                location = start + section.instructions.at(i).addr;
+        for (int j = 0;j < section.instructions.size() && !found;j++) { // every instruction of source
+            if (section.instructions.at(j).label == tmp) {
+                location = start + section.instructions.at(j).addr;
                 write << setfill(SPACE) << setw(8);
                 extDefStr += write.str();
-                write.clear();
+                write.str("");
                 write << setfill(SPACE) << setw(8) << tmp;
                 extDefStr += write.str();
-                write.clear();
+                write.str("");
                 write << setfill(SPACE) << setw(8) << location << endl;
                 extDefStr += write.str();
-                write.clear();
+                write.str("");
                 found = true;
             }
         }
@@ -320,7 +348,7 @@ string SICXE_Parser::RemoveFileExtension(string filename) {
         start = filename.find_last_of("\\");
     }
     end = filename.find_last_of(".");
-    filename = filename.substr(start, end);
+    filename = filename.substr(start + 1, end - start - 1);
     return filename;
 }
 
@@ -348,11 +376,11 @@ string SICXE_Parser::BuildExtDef(int idx) {
         extDefRecStr += tmp + SPACE;
         // search for extdef in instructions
         found = false;
-        for (int j = 0;j < section.instructions.size() && !found;i++) { // every instruction of source
-            if (section.instructions.at(j).label == tmp && section.instructions.at(j).mnemonic == "EQU") {
+        for (int j = 0;j < section.instructions.size() && !found;j++) { // every instruction of source
+            if (section.instructions.at(j).label == tmp) {
                 stream << setfill('0') << setw(ADDR_DIGIT_PLACES) << hex << section.instructions.at(j).addr;
                 extDefRecStr += stream.str();
-                stream.clear();
+                stream.str("");
                 found = true;
             }
         }
@@ -397,7 +425,7 @@ string SICXE_Parser::BuildTextRecord(int idx) {
             textRecStr += TEXTOBJ;
             stream << setfill('0') << setw(ADDR_DIGIT_PLACES) << hex << addrcount;
             textRecStr += stream.str();
-            stream.clear();
+            stream.str("");
             idxForLength = textRecStr.size();
         }
         // when in middle of parsing objcodes within limit of 16 bytes
@@ -409,7 +437,7 @@ string SICXE_Parser::BuildTextRecord(int idx) {
             stream << hex << bytecount;
             textRecStr.insert(idxForLength, stream.str());
             textRecStr += "\n";
-            stream.clear();
+            stream.str("");
             isOverLimit = true;
 
             if (i != totalInstructions - 1)
@@ -419,7 +447,7 @@ string SICXE_Parser::BuildTextRecord(int idx) {
             bytecount += digitPlaces / 2;
             stream << setfill('0') << setw(digitPlaces) << hex << curInstruction.objcode;
             textRecStr += stream.str();
-            stream.clear();
+            stream.str("");
         }
     }
     return textRecStr;
@@ -438,20 +466,23 @@ string SICXE_Parser::BuildModRecord(int idx) {
 
         if (curInstruction.args.size() > 0) { // if this instruction has args
             for (int j = 0; j < curInstruction.args.size();j++) { // for every arg
-                if ((idx_extref = HasExtRef(curInstruction.args.at(i), idx)) != FAIL_FIND) { // current arg is an extref
+                if ((idx_extref = HasExtRef(curInstruction.args.at(j), idx)) != FAIL_FIND) { // current arg is an extref
                     modSize = DEFAULT_MOD_SIZE;
                     modRecStr += MODOBJ;
-                    sign = LeadingPlusOrMinusCheck(curInstruction.args.at(i));
+                    sign = LeadingPlusOrMinusCheck(curInstruction.args.at(j));
                     if (curInstruction.mnemonic.front() == PLUS)
-                        modRecStr += curInstruction.addr + 1;
+                        stream << setfill('0') << setw(ADDR_DIGIT_PLACES) << hex << curInstruction.addr + 1;
                     else
-                        modRecStr += curInstruction.addr;
+                        stream << setfill('0') << setw(ADDR_DIGIT_PLACES) << hex << curInstruction.addr;
+
+                    modRecStr += stream.str();
+                    stream.str("");
 
                     if (curInstruction.mnemonic == M_WORD)
                         modSize = WORD_MOD_SIZE;
                     stream << setfill('0') << setw(2) << hex << modSize;
                     modRecStr += stream.str();
-                    stream.clear();
+                    stream.str("");
                     modRecStr += sign + section.extref.at(idx_extref) + "\n";
                 }
             }
@@ -460,7 +491,7 @@ string SICXE_Parser::BuildModRecord(int idx) {
     return modRecStr;
 }
 
-// checks if the token is in the extrefs of sections[idx]
+// checks if the token is in the extrefs of sections[idx] and returns the idx
 int SICXE_Parser::HasExtRef(string token, int sectionIdx) {
     bool found = false;
     int extrefIdx = -1;

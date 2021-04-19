@@ -14,6 +14,8 @@
 #define FIRST_ARG 1
 #define ADDR_COL 1
 #define SECOND_COL 2
+#define THIRD_COL 3
+#define OBJCODE_COL 5
 #define START 0
 #define EXTDEF 3
 #define EXTREF 4
