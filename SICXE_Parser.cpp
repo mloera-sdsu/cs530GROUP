@@ -10,7 +10,7 @@ SICXE_Parser::SICXE_Parser(int &argc, char *argv[]) {
 void SICXE_Parser::Read() {
     char c;
     int wordcount, sectionsIdx = 0;
-    bool comma;
+    bool comma = false;
     bool extdef_F = false;
     bool extref_F = false;
     bool end = false;
@@ -44,8 +44,10 @@ void SICXE_Parser::Read() {
                             ++wordcount;
                             if (wordcount == ADDR_COL)
                                 curInstruction.addr = stringToHex(token);
-                            if (wordcount == 2)
+                            if (wordcount == 2){
                                 curSection.name = token;
+                                curInstruction.label = token;
+                            }
                             if (wordcount == 4)
                                 curSection.start = stringToHex(token);
                             token.clear();
@@ -109,19 +111,17 @@ void SICXE_Parser::Read() {
                     else { // in general
                         if ((isspace(c) && token.size() != 0)) { // word defining condition for in general
                             wordcount++;
-
-                            if (token == "END" || end) { //First checks for "END"
-                                if (token == "END")
+                            if (token == "END") { //First checks for "END"
+                                
+                                if (token == "END"){
                                     curInstruction.mnemonic = token;
-                                for (int i = 0; i < curSection.instructions.size();++i) {
-                                    if (token.compare(curSection.instructions[i].label) == 0) { //Checks all labels to grab address
-                                        curInstruction.addr = curSection.instructions[i].addr;
-                                    }
                                 }
-                                token.clear();
-                                end = true;
+                                if(j != line.size()-1)
+                                    end = true;
+                                
+                                token.clear(); 
                             }
-                            if (wordcount == ADDR_COL) {        //Handles adding addr token
+                            else if (wordcount == ADDR_COL) {        //Handles adding addr token
                                 curInstruction.addr = stringToHex(token);
                                 token.clear();
                             }
@@ -210,7 +210,16 @@ void SICXE_Parser::Read() {
                             token.push_back(c); //0035    LDX
                             if (j == line.size() - 1) {
                                 wordcount++;
-                                if (curInstruction.args.empty())
+                                if(end){
+                                    for (int i = 0; i < curSection.instructions.size();++i) {
+                                        if (token.compare(curSection.instructions[i].label) == 0) { //Checks all labels to grab address
+                                            curInstruction.addr = curSection.instructions[i].addr;
+                                            
+                                            end = false;
+                                        }
+                                    }
+                                }
+                                else if (curInstruction.args.empty())
                                     curInstruction.args.push_back(token);
                                 else if (wordcount == OBJCODE_COL)
                                     curInstruction.objcode = stringToHex(token);
@@ -226,15 +235,18 @@ void SICXE_Parser::Read() {
             if (curSection.instructions.at(sizeOfVector - 1).mnemonic == "END") { //Check if the last instruction is END
                 curSection.end = curSection.instructions.at(sizeOfVector - 2).addr; //Get address of instruction before END
                 curSection.end += 3;
+                
             }
             else {
                 curSection.end = curSection.instructions.at(sizeOfVector - 1).addr; //Last instruction address
                 curSection.end += 3;
+                //printf("%X",curSection.end);
+                
             }
             sections.emplace_back(curSection);
             sectionsIdx++;
         }
-
+        infile.close();
     }
 }
 uint32_t SICXE_Parser::stringToHex(string token) {
@@ -279,14 +291,17 @@ void SICXE_Parser::WriteSymTabFile() {
             s_start = sections.at(i).start; //000000
             s_end = sections.at(i).end; // 002F09
             length = s_end - s_start; // 002F09
-            record += SymTabSections(s_name, s_start, s_end);
-            record += SymTabDefs(source, length);
+            record += SymTabSections(s_name, s_start, length);
+            record += SymTabDefs(source, s_start);
         }
         else {
             s_start = s_end; // Next section starting address is the end of the previous
+            printf("%X\n", length);
             length = sections.at(i).end - sections.at(i).start;
+            printf("%X\n", length);
             s_end = s_start + length;
-            record += SymTabSections(s_name, s_start, s_end);
+            printf("%X\n", s_end);
+            record += SymTabSections(s_name, s_start, length);
             record += SymTabDefs(source, length);
         }
     }
@@ -296,13 +311,17 @@ void SICXE_Parser::WriteSymTabFile() {
 string SICXE_Parser::SymTabSections(string s_name, uint32_t s_start, uint32_t length) {
     stringstream write;
     string record;
-    write << setfill(SPACE) << setw(8) << s_name;
+
+    write << s_name << setw(16-s_name.length()) << setfill(SPACE) << "" ;
     record += write.str();
     write.str("");
-    write << setfill(SPACE) << setw(8) << hex << s_start;
+    write << uppercase << hex << setw(6) << setfill('0') << s_start;
     record += write.str();
     write.str("");
-    write << setfill(SPACE) << setw(8) << hex << length << endl;
+    write << setfill(SPACE) << setw(2) << "";
+    record += write.str();
+    write.str("");
+    write << uppercase << hex << setw(6) << setfill('0') << length << endl;
     record += write.str();
     write.str("");
     return record;
@@ -311,22 +330,27 @@ string SICXE_Parser::SymTabDefs(SICXE_Source section, uint32_t start) {
     string extDefStr, tmp;
     stringstream write;
     uint32_t location;
+    extDefStr = "";
     bool found;
     for (int i = 0; i < section.extdef.size(); i++) {
-        tmp = section.extdef.at(i) + SPACE;
-        extDefStr = "";
+        tmp = section.extdef.at(i);
         // search for extdef in instructions
         found = false;
         for (int j = 0;j < section.instructions.size() && !found;j++) { // every instruction of source
             if (section.instructions.at(j).label == tmp) {
+                
                 location = start + section.instructions.at(j).addr;
-                write << setfill(SPACE) << setw(8);
+                printf("%X," section.instructions.at(j).addr);
+                write << setfill(SPACE) << setw(8) << "";
                 extDefStr += write.str();
                 write.str("");
-                write << setfill(SPACE) << setw(8) << tmp;
+                write << tmp;
                 extDefStr += write.str();
                 write.str("");
-                write << setfill(SPACE) << setw(8) << location << endl;
+                write << setfill(SPACE) << setw(8-tmp.length()) << "";
+                extDefStr += write.str();
+                write.str("");
+                write << uppercase << setfill('0') << setw(6) << hex << location << endl;
                 extDefStr += write.str();
                 write.str("");
                 found = true;
@@ -359,7 +383,7 @@ string SICXE_Parser::BuildHeaderRecord(int idx) {
 
     headerRecStr += HEADEROBJ;
     headerRecStr += section.name + SPACE;
-    stream << setfill('0') << setw(ADDR_DIGIT_PLACES) << hex << section.start << section.end << endl;
+    stream << uppercase << setfill('0') << setw(ADDR_DIGIT_PLACES) << hex << section.end-section.start << endl;
     headerRecStr += stream.str();
     return headerRecStr;
 }
@@ -378,7 +402,7 @@ string SICXE_Parser::BuildExtDef(int idx) {
         found = false;
         for (int j = 0;j < section.instructions.size() && !found;j++) { // every instruction of source
             if (section.instructions.at(j).label == tmp) {
-                stream << setfill('0') << setw(ADDR_DIGIT_PLACES) << hex << section.instructions.at(j).addr;
+                stream << uppercase << setfill('0') << setw(ADDR_DIGIT_PLACES) << hex << section.instructions.at(j).addr;
                 extDefRecStr += stream.str();
                 stream.str("");
                 found = true;
@@ -423,7 +447,7 @@ string SICXE_Parser::BuildTextRecord(int idx) {
             bytecount = 0;
             isOverLimit = false;
             textRecStr += TEXTOBJ;
-            stream << setfill('0') << setw(ADDR_DIGIT_PLACES) << hex << addrcount;
+            stream << uppercase << setfill('0') << setw(ADDR_DIGIT_PLACES) << hex << addrcount;
             textRecStr += stream.str();
             stream.str("");
             idxForLength = textRecStr.size();
@@ -434,7 +458,7 @@ string SICXE_Parser::BuildTextRecord(int idx) {
             digitPlaces = EXT_ADDR_DIGIT_PLACES;
 
         if (bytecount + digitPlaces / 2 > TEXTREC_BYTE_LIMIT || i == totalInstructions - 1) {// check if surpassed byte limit or last instruction
-            stream << hex << bytecount;
+            stream << uppercase << hex << bytecount;
             textRecStr.insert(idxForLength, stream.str());
             textRecStr += "\n";
             stream.str("");
@@ -445,7 +469,7 @@ string SICXE_Parser::BuildTextRecord(int idx) {
         }
         else { // within byte limit, add objcode
             bytecount += digitPlaces / 2;
-            stream << setfill('0') << setw(digitPlaces) << hex << curInstruction.objcode;
+            stream << uppercase << setfill('0') << setw(digitPlaces) << hex << curInstruction.objcode;
             textRecStr += stream.str();
             stream.str("");
         }
@@ -471,16 +495,16 @@ string SICXE_Parser::BuildModRecord(int idx) {
                     modRecStr += MODOBJ;
                     sign = LeadingPlusOrMinusCheck(curInstruction.args.at(j));
                     if (curInstruction.mnemonic.front() == PLUS)
-                        stream << setfill('0') << setw(ADDR_DIGIT_PLACES) << hex << curInstruction.addr + 1;
+                        stream << uppercase << setfill('0') << setw(ADDR_DIGIT_PLACES) << hex << curInstruction.addr + 1;
                     else
-                        stream << setfill('0') << setw(ADDR_DIGIT_PLACES) << hex << curInstruction.addr;
+                        stream << uppercase << setfill('0') << setw(ADDR_DIGIT_PLACES) << hex << curInstruction.addr;
 
                     modRecStr += stream.str();
                     stream.str("");
 
                     if (curInstruction.mnemonic == M_WORD)
                         modSize = WORD_MOD_SIZE;
-                    stream << setfill('0') << setw(2) << hex << modSize;
+                    stream << uppercase << setfill('0') << setw(2) << hex << modSize;
                     modRecStr += stream.str();
                     stream.str("");
                     modRecStr += sign + section.extref.at(idx_extref) + "\n";

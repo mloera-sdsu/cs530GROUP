@@ -3,7 +3,7 @@
 int main(int argc, char *argv[]) {
     SICXE_Parser parser = SICXE_Parser(argc, argv); 
     parser.Read();
-    parser.WriteSymTabFile();
     parser.WriteObjFile();
+    parser.WriteSymTabFile();
     return EXIT_SUCCESS;
 }
