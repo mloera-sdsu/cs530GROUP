@@ -44,7 +44,8 @@ public:
     SICXE_Parser(int &argc, char *argv[]);
     void Read();
     int CheckToken(string token, int column, vector<string> defs);
-    void Write();
+    void WriteObjFile();
+    void WriteSymTabFile();
 private:
     uint32_t stringToHex(string token);
     string BuildHeaderRecord(int idx);
@@ -64,7 +65,6 @@ public:
     uint32_t start, end;
 
     SICXE_Source();
-    void Term(string term);
 };
 
 // one line of sic/xe with address label mnemonic etc..

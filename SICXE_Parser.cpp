@@ -205,7 +205,7 @@ uint32_t SICXE_Parser::stringToHex(string token) {
     return token_Hex;
 }
 // writes to a file, might need to pass a string mode parameter to specify type of output file
-void SICXE_Parser::Write() {
+void SICXE_Parser::WriteObjFile() {
     string filename;
     string record;
 
@@ -218,6 +218,10 @@ void SICXE_Parser::Write() {
         record += BuildModRecord(i);
         outfile.close();
     }
+}
+
+void SICXE_Parser::WriteSymTabFile() {
+
 }
 
 // pass argv raw arg for filepath and return the filename with no extention
