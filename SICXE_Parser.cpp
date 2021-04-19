@@ -201,9 +201,11 @@ void SICXE_Parser::Read() {
         int sizeOfVector = curSection.instructions.size();
         if(curSection.instructions.at(sizeOfVector-1).mnemonic.compare("END") == 0){ //Check if the last instruction is END
             curSection.end = curSection.instructions.at(sizeOfVector-2).addr; //Get address of instruction before END
+            curSection.end += 3;
         }
         else{
             curSection.end = curSection.instructions.at(sizeOfVector).addr; //Last instruction address
+            curSection.end += 3;
         }
     }
 }
