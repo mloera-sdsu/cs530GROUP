@@ -17,11 +17,14 @@
 #define START 0
 #define EXTDEF 3
 #define EXTREF 4
+#define DEFAULT_MOD_SIZE 5
+#define WORD_MOD_SIZE 6
 #define HEADEROBJ 'H'
 #define EXTDEFOBJ 'D'
 #define EXTREFOBJ 'R'
 #define TEXTOBJ 'T'
 #define MODOBJ 'M'
+#define M_WORD "WORD"
 #define OBJECT_EXTENSION ".obj"
 #define TEXTREC_BYTE_LIMIT 16
 #define SPACE ' '

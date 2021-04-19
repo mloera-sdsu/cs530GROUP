@@ -237,13 +237,13 @@ void SICXE_Parser::WriteSymTabFile() {
     stringstream write;
     string record = "";
     string filename = "ESTAB.st";
-    outfile.open(filename, fstream::out);
     SICXE_Source source;
     string s_name;
     uint32_t s_start;
     uint32_t s_end;
     uint32_t length;
 
+    outfile.open(filename, fstream::out);
     for (int i = 0; i < sections.size(); ++i) {
         source = sections.at(i);
         s_name = sections.at(i).name;
@@ -253,14 +253,16 @@ void SICXE_Parser::WriteSymTabFile() {
             length = s_end - s_start; // 002F09
             record += SymTabSections(s_name, s_start, s_end);
             record += SymTabDefs(source, length);
-            continue;
         }
-        s_start = s_end; //Next section starting address is the end of the previous
-        length = sections.at(i).end - sections.at(i).start;
-        s_end = s_start + length;
-        record += SymTabSections(s_name, s_start, s_end);
-        record += SymTabDefs(source, length);
+        else {
+            s_start = s_end; // Next section starting address is the end of the previous
+            length = sections.at(i).end - sections.at(i).start;
+            s_end = s_start + length;
+            record += SymTabSections(s_name, s_start, s_end);
+            record += SymTabDefs(source, length);
+        }
     }
+    outfile << record;
     outfile.close();
 }
 string SICXE_Parser::SymTabSections(string s_name, uint32_t s_start, uint32_t length) {
@@ -269,10 +271,10 @@ string SICXE_Parser::SymTabSections(string s_name, uint32_t s_start, uint32_t le
     write << setfill(SPACE) << setw(8) << s_name;
     record += write.str();
     write.clear();
-    write << s_start << setw(8);
+    write << setfill(SPACE) << setw(8) << hex << s_start;
     record += write.str();
     write.clear();
-    write << length << setw(8) << endl;
+    write << setfill(SPACE) << setw(8) << hex << length << endl;
     record += write.str();
     write.clear();
     return record;
@@ -293,7 +295,7 @@ string SICXE_Parser::SymTabDefs(SICXE_Source section, uint32_t start) {
                 write << setfill(SPACE) << setw(8);
                 extDefStr += write.str();
                 write.clear();
-                write << setfill(SPACE) << setw(8) << extDefStr;
+                write << setfill(SPACE) << setw(8) << tmp;
                 extDefStr += write.str();
                 write.clear();
                 write << setfill(SPACE) << setw(8) << location << endl;
@@ -428,7 +430,8 @@ string SICXE_Parser::BuildModRecord(int idx) {
     stringstream stream;
     SICXE_Source section = sections.at(idx);
     SICXE_Instruction curInstruction;
-    int idx_extref, totalInstructions = section.instructions.size();
+    char sign;
+    int idx_extref, modSize, totalInstructions = section.instructions.size();
 
     for (int i = 0;i < totalInstructions;i++) {// for every instruction in this section
         curInstruction = section.instructions.at(i);
@@ -436,14 +439,25 @@ string SICXE_Parser::BuildModRecord(int idx) {
         if (curInstruction.args.size() > 0) { // if this instruction has args
             for (int j = 0; j < curInstruction.args.size();j++) { // for every arg
                 if ((idx_extref = HasExtRef(curInstruction.args.at(i), idx)) != FAIL_FIND) { // current arg is an extref
+                    modSize = DEFAULT_MOD_SIZE;
                     modRecStr += MODOBJ;
-                    if (LeadingPlusOrMinusCheck(curInstruction.args.at(i)) == PLUS) {
+                    sign = LeadingPlusOrMinusCheck(curInstruction.args.at(i));
+                    if (curInstruction.mnemonic.front() == PLUS)
+                        modRecStr += curInstruction.addr + 1;
+                    else
+                        modRecStr += curInstruction.addr;
 
-                    }
+                    if (curInstruction.mnemonic == M_WORD)
+                        modSize = WORD_MOD_SIZE;
+                    stream << setfill('0') << setw(2) << hex << modSize;
+                    modRecStr += stream.str();
+                    stream.clear();
+                    modRecStr += sign + section.extref.at(idx_extref) + "\n";
                 }
             }
         }
     }
+    return modRecStr;
 }
 
 // checks if the token is in the extrefs of sections[idx]
