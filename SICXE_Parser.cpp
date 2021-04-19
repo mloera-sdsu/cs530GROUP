@@ -295,13 +295,13 @@ void SICXE_Parser::WriteSymTabFile() {
         }
         else {
             s_start = s_end; // Next section starting address is the end of the previous
-            printf("%X\n", length);
+            //printf("%X\n", length);
             length = sections.at(i).end - sections.at(i).start;
-            printf("%X\n", length);
+            //printf("%X\n", length);
             s_end = s_start + length;
-            printf("%X\n", s_end);
+            //printf("%X\n", s_end);
             record += SymTabSections(s_name, s_start, length);
-            record += SymTabDefs(source, length);
+            record += SymTabDefs(source, s_start);
         }
     }
     outfile << record;
@@ -339,7 +339,8 @@ string SICXE_Parser::SymTabDefs(SICXE_Source section, uint32_t start) {
             if (section.instructions.at(j).label == tmp) {
                 
                 location = start + section.instructions.at(j).addr;
-                
+                uint32_t test = section.instructions.at(j).addr;
+                location = start + test;
                 write << setfill(SPACE) << setw(8) << "";
                 extDefStr += write.str();
                 write.str("");
