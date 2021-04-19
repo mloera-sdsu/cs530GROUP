@@ -205,19 +205,24 @@ uint32_t SICXE_Parser::stringToHex(string token) {
     return token_Hex;
 }
 // writes to a file, might need to pass a string mode parameter to specify type of output file
-void SICXE_Parser::Write() {
+void SICXE_Parser::WriteObjFile() {
     string filename;
     string record;
 
     for (int i = 0; i < sections.size();i++) { // for every section
-        outfile.open(sections.at(i).filename, fstream::out);
+        outfile.open(sections.at(i).filename + OBJECT_EXTENSION, fstream::out);
         record += BuildHeaderRecord(i);
         record += BuildExtDef(i);
         record += BuildExtRef(i);
         record += BuildTextRecord(i);
         record += BuildModRecord(i);
+        outfile << record;
         outfile.close();
     }
+}
+
+void SICXE_Parser::WriteSymTabFile() {
+
 }
 
 // pass argv raw arg for filepath and return the filename with no extention
@@ -331,3 +336,53 @@ string SICXE_Parser::BuildTextRecord(int idx) {
     }
     return textRecStr;
 }
+
+string SICXE_Parser::BuildModRecord(int idx) {
+    string modRecStr;
+    stringstream stream;
+    SICXE_Source section = sections.at(idx);
+    SICXE_Instruction curInstruction;
+    int idx_extref, totalInstructions = section.instructions.size();
+
+    for (int i = 0;i < totalInstructions;i++) {// for every instruction in this section
+        curInstruction = section.instructions.at(i);
+
+        if (curInstruction.args.size() > 0) { // if this instruction has args
+            for (int j = 0; j < curInstruction.args.size();j++) { // for every arg
+                if ((idx_extref = HasExtRef(curInstruction.args.at(i), idx)) != FAIL_FIND) { // current arg is an extref
+                    modRecStr += MODOBJ;
+                    if (LeadingPlusOrMinusCheck(curInstruction.args.at(i)) == PLUS) {
+
+                    }
+                }
+            }
+        }
+    }
+}
+
+// checks if the token is in the extrefs of sections[idx]
+int SICXE_Parser::HasExtRef(string token, int sectionIdx) {
+    bool found = false;
+    int extrefIdx = -1;
+    for (int i = 0;i < sections.at(sectionIdx).extref.size() && !found;i++) {
+        if (token.find(sections.at(sectionIdx).extref.at(i)) != string::npos) {
+            found = true;
+            extrefIdx = i;
+        }
+    }
+    return extrefIdx;
+}
+
+char SICXE_Parser::LeadingPlusOrMinusCheck(string token) {
+    char opchar;
+
+    if (token.front() == PLUS) // explicit plus leading
+        opchar = PLUS;
+    else if (token.front() == MINUS) // explicit minus leading
+        opchar = MINUS;
+    else // anything without leading operator assumed plus
+        opchar = PLUS;
+
+    return opchar;
+}
+

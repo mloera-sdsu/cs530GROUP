@@ -9,6 +9,7 @@
 #include <fstream>
 #include <sstream>
 #include <set>
+#include <algorithm>
 
 #define FIRST_ARG 1
 #define ADDR_COL 1
@@ -20,8 +21,13 @@
 #define EXTDEFOBJ 'D'
 #define EXTREFOBJ 'R'
 #define TEXTOBJ 'T'
+#define MODOBJ 'M'
+#define OBJECT_EXTENSION ".obj"
 #define TEXTREC_BYTE_LIMIT 16
 #define SPACE ' '
+#define PLUS '+'
+#define MINUS '-'
+#define FAIL_FIND -1
 #define ADDR_DIGIT_PLACES 6
 #define EXT_ADDR_DIGIT_PLACES 8
 
@@ -44,7 +50,8 @@ public:
     SICXE_Parser(int &argc, char *argv[]);
     void Read();
     int CheckToken(string token, int column, vector<string> defs);
-    void Write();
+    void WriteObjFile();
+    void WriteSymTabFile();
 private:
     uint32_t stringToHex(string token);
     string BuildHeaderRecord(int idx);
@@ -53,6 +60,8 @@ private:
     string BuildTextRecord(int idx);
     string BuildModRecord(int idx);
     string RemoveFileExtension(string filename);
+    int HasExtRef(string token, int sectionIdx);
+    char LeadingPlusOrMinusCheck(string token);
 };
 
 // source file contents consisting of an array of SICXE_Instruction objects
