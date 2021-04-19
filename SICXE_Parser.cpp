@@ -35,19 +35,19 @@ void SICXE_Parser::Read() {
                 int lineCount = curSection.instructions.size();
                 curInstruction = SICXE_Instruction();
                 for (int j = 0;line.at(j);j++) { // char by char
-                    
+
                     c = line.at(j);
                     if (c == ',')
                         comma = true;
 
-                    if (lineCount==0){ // first line
-                        if(isspace(c) && token.size() != 0){// word defining condition for 1st line
+                    if (lineCount == 0) { // first line
+                        if (isspace(c) && token.size() != 0) {// word defining condition for 1st line
                             ++wordcount;
-                            if(wordcount == ADDR_COL)
+                            if (wordcount == ADDR_COL)
                                 curInstruction.addr = stringToHex(token);
-                            if(wordcount == 2)
+                            if (wordcount == 2)
                                 curSection.name = token;
-                            if(wordcount == 4)
+                            if (wordcount == 4)
                                 curSection.start = stringToHex(token);
                             token.erase();
                         }
@@ -55,41 +55,41 @@ void SICXE_Parser::Read() {
                             token.push_back(c);
                         }
                     }
-                    else if (lineCount == 1){ // ext def line
-                        if(comma && token.size()!=0 && extdef_F){
+                    else if (lineCount == 1) { // ext def line
+                        if (comma && token.size() != 0 && extdef_F) {
                             curSection.extdef.push_back(token);
                             comma = false;
                             token.erase();
                         }
                         if (isspace(c) && token.size() != 0) {
                             ++wordcount;
-                            if(token.compare("EXTDEF")) //CHECK IF THIS IS NEEDED
+                            if (token.compare("EXTDEF")) //CHECK IF THIS IS NEEDED
                                 extdef_F = true;
                             token.erase();
                         }
-                        else if(!isspace(c)){
+                        else if (!isspace(c)) {
                             token.push_back(c);
                         }
                     }
-                    else if (lineCount == 2){ // ext ref line
-                        if(comma && token.size()!=0 && extref_F){
+                    else if (lineCount == 2) { // ext ref line
+                        if (comma && token.size() != 0 && extref_F) {
                             curSection.extref.push_back(token);
                             comma = false;
                             token.erase();
                         }
-                        if(isspace(c) && token.size() != 0){
+                        if (isspace(c) && token.size() != 0) {
                             ++wordcount;
-                            if(token.compare("EXTREF")) //CHECK IF THIS IS NEEDED
+                            if (token.compare("EXTREF")) //CHECK IF THIS IS NEEDED
                                 extref_F = true;
                             token.erase();
                         }
-                        else if(!isspace(c)){
+                        else if (!isspace(c)) {
                             token.push_back(c);
                         }
                     }
                     else{ // in general
 						if ((isspace(c) && token.size() != 0)) { // word defining condition for in general
-                        	if (mnemonicsDictionary.mnemonics.count(token) > 0U){ //check if token is in dictionary 
+                        	if (mnemonicsDictionary.mnemonics.count(token) > 0U){ //check if token is in dictionary
                                 inDictionary = true;
 							}
 
@@ -119,21 +119,23 @@ void SICXE_Parser::Read() {
                             else if(curInstruction.args.empty()){ //Handles adding args (1st section if +/-)(2nd section if ',')(3rd if jusst token)
                                 if(token.find('+') != string::npos || token.find('-') != string::npos){ //Check if token has + or -
 
-                                    //Handle parenthesis first 
+                                    //Handle parenthesis first
                                     //Change arithmtic if '-' outside parenthesis
                                     //remove parenthesis
                                     bool parenthesis = false;
-                                    if(token.find('(') != string::npos || token.find(')') != string::npos){
-                                        for(int q = 0; q < token.size() - 1; q++){
-                                            if (token[q] == '(' && token[q - 1] == '-'){
+                                    if (token.find('(') != string::npos || token.find(')') != string::npos) {
+                                        for (int q = 0; q < token.size() - 1; q++) {
+                                            if (token[q] == '(' && token[q - 1] == '-') {
                                                 parenthesis == true;
-                                            } else if(token[q] == ')'){
+                                            }
+                                            else if (token[q] == ')') {
                                                 parenthesis == false;
                                             }
 
-                                            if ((token[q] == '-') && parenthesis == true){
+                                            if ((token[q] == '-') && parenthesis == true) {
                                                 token[q] == '+';
-                                            } else if((token[q] == '+') && parenthesis == true){
+                                            }
+                                            else if ((token[q] == '+') && parenthesis == true) {
                                                 token[q] == '-';
                                             }
                                         }
@@ -144,12 +146,13 @@ void SICXE_Parser::Read() {
                                     //Seperate args based on +/- and add them to vector
                                     string tempPlusMinus;
 
-                                    for (int k = 0; k < token.size() - 1; k++){
-                                        if(token[k] == '+' || token[k] == '-'){
+                                    for (int k = 0; k < token.size() - 1; k++) {
+                                        if (token[k] == '+' || token[k] == '-') {
                                             curInstruction.args.push_back(tempPlusMinus);
                                             tempPlusMinus = "";
                                             tempPlusMinus += token[k];
-                                        } else{
+                                        }
+                                        else {
                                             tempPlusMinus += token[k];
                                         }
                                     }
@@ -159,18 +162,18 @@ void SICXE_Parser::Read() {
                                 // Checks if token has comma and seperates and adds them to args
                                 else if(token.find(',') != std::string::npos){
                                     string tempComma;
-                                    for(int m = 0; m < token.size() - 1; m++){
-                                        if(token[m] != ','){
+                                    for (int m = 0; m < token.size() - 1; m++) {
+                                        if (token[m] != ',') {
                                             tempComma += token[m];
                                         }
-                                        else if(token[m] == ','){
+                                        else if (token[m] == ',') {
                                             curInstruction.args.push_back(tempComma);
                                             tempComma = "";
                                         }
                                     }
                                     curInstruction.args.push_back(tempComma);
                                 }
-                                else{
+                                else {
                                     curInstruction.args.push_back(token);
                                 }
                                 token.erase();
@@ -194,14 +197,13 @@ void SICXE_Parser::Read() {
         }
     }
 }
-uint32_t SICXE_Parser::stringToHex(string token){
+uint32_t SICXE_Parser::stringToHex(string token) {
     stringstream ss;
     uint32_t token_Hex;
-    ss<<hex<<token;
-    ss>>token_Hex;
+    ss << hex << token;
+    ss >> token_Hex;
     return token_Hex;
 }
-
 // writes to a file, might need to pass a string mode parameter to specify type of output file
 void SICXE_Parser::Write() {
     string filename;
@@ -281,41 +283,48 @@ string SICXE_Parser::BuildExtRef(int idx) {
 }
 // every 16 bytes (2 hex digits per byte)
 string SICXE_Parser::BuildTextRecord(int idx) {
-    string textRecStr, byteLength;
+    string textRecStr;
     stringstream stream;
     SICXE_Source section = sections.at(idx);
     size_t idxForLength;
     int digitPlaces, bytecount;
-    bool isOverLimit;
+    uint32_t addrcount;
+    bool isOverLimit = true;
 
+    addrcount = section.start;
+    bytecount = 0;
     for (int i = 0;i < section.instructions.size();i++) {
-        if (isOverLimit) {
+        if (isOverLimit) {// starts at overlimit to set new TextRecord line
+            addrcount += bytecount;
             bytecount = 0;
             isOverLimit = false;
             textRecStr += TEXTOBJ;
-            stream << setfill('0') << setw(ADDR_DIGIT_PLACES) << hex << section.start;
+            stream << setfill('0') << setw(ADDR_DIGIT_PLACES) << hex << addrcount;
             textRecStr += stream.str();
             stream.clear();
             idxForLength = textRecStr.size();
         }
-        else {
-            digitPlaces = ADDR_DIGIT_PLACES;
-            if (section.instructions.at(i).mnemonic.find('+') != string::npos) // extended
-                digitPlaces = EXT_ADDR_DIGIT_PLACES;
+        // when in middle of parsing objcodes within limit of 16 bytes
+        digitPlaces = ADDR_DIGIT_PLACES;
+        if (section.instructions.at(i).mnemonic.find('+') != string::npos) // extended addressing case
+            digitPlaces = EXT_ADDR_DIGIT_PLACES;
 
-            if (bytecount + digitPlaces / 2 > TEXTREC_BYTE_LIMIT) {// check byte limit
-                stream << hex << bytecount;
-                textRecStr.insert(idxForLength, stream.str());
-                stream.clear();
-                isOverLimit = true;
+        if (bytecount + digitPlaces / 2 > TEXTREC_BYTE_LIMIT || i == section.instructions.size() - 1) {// check if surpassed byte limit or last instruction
+            stream << hex << bytecount;
+            textRecStr.insert(idxForLength, stream.str());
+            textRecStr += "\n";
+            stream.clear();
+            isOverLimit = true;
+
+            if (i != section.instructions.size() - 1)
                 i--;
-            }
-            else { // within byte limit, add objcode
-                bytecount += digitPlaces / 2;
-                stream << setfill('0') << setw(digitPlaces) << hex << section.instructions.at(i).objcode;
-                stream.clear();
-            }
+        }
+        else { // within byte limit, add objcode
+            bytecount += digitPlaces / 2;
+            stream << setfill('0') << setw(digitPlaces) << hex << section.instructions.at(i).objcode;
+            textRecStr += stream.str();
+            stream.clear();
         }
     }
+    return textRecStr;
 }
-
