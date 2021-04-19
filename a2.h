@@ -9,6 +9,7 @@
 #include <fstream>
 #include <sstream>
 #include <set>
+#include <algorithm>
 
 #define FIRST_ARG 1
 #define ADDR_COL 1

@@ -260,6 +260,7 @@ void SICXE_Parser::WriteSymTabFile() {
         record += SymTabSections(s_name, s_start, s_end);
         record += SymTabDefs(source, length);
     }
+    outfile.close();
 }
 string SICXE_Parser::SymTabSections(string s_name, uint32_t s_start, uint32_t length){
     stringstream write;
@@ -302,7 +303,7 @@ string SICXE_Parser::SymTabDefs(SICXE_Source section, uint32_t start){
         }
         if (!found) { // definition never found in section
             errno = ENXIO;
-            fprintf(stderr, "EXTDEF %s defined but not loaded", tmp);
+            fprintf(stderr, "EXTDEF %s defined but not loaded", tmp.c_str());
             perror("");
         }
     }
@@ -353,7 +354,7 @@ string SICXE_Parser::BuildExtDef(int idx) {
         }
         if (!found) { // definition never found in section
             errno = ENXIO;
-            fprintf(stderr, "EXTDEF %s defined but not loaded", tmp);
+            fprintf(stderr, "EXTDEF %s defined but not loaded", tmp.c_str());
             perror("");
         }
     }
