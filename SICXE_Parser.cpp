@@ -94,6 +94,8 @@ void SICXE_Parser::Read() {
                             }
 
                             if (token.compare("END") == 0 || end) { //First checks for "END"
+                                if(token.compare("END") == 0)
+                                    curInstruction.mnemonic = token;
                                 for (int i = 0; i < curSection.instructions.size();++i) {
                                     if (token.compare(curSection.instructions[i].label) == 0) { //Checks all labels to grab address
                                         curInstruction.addr = curSection.instructions[i].addr;
@@ -195,7 +197,14 @@ void SICXE_Parser::Read() {
             }
             sectionsIdx++;
         }
-
+        //Find end address
+        int sizeOfVector = curSection.instructions.size();
+        if(curSection.instructions.at(sizeOfVector-1).mnemonic.compare("END") == 0){ //Check if the last instruction is END
+            curSection.end = curSection.instructions.at(sizeOfVector-2).addr; //Get address of instruction before END
+        }
+        else{
+            curSection.end = curSection.instructions.at(sizeOfVector).addr; //Last instruction address
+        }
     }
 }
 uint32_t SICXE_Parser::stringToHex(string token) {
