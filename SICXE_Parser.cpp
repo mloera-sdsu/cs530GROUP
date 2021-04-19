@@ -42,13 +42,13 @@ void SICXE_Parser::Read() {
                     if (lineCount == 0) { // first line
                         if (isspace(c) && token.size() != 0) {// word defining condition for 1st line
                             ++wordcount;
-                            if (wordcount == ADDR_COL)
+                            if (wordcount == ADDR_COL)  //Grabs the address 
                                 curInstruction.addr = stringToHex(token);
-                            if (wordcount == 2){
-                                curSection.name = token;
+                            if (wordcount == 2){ //Grabs the name of the section
+                                curSection.name = token; 
                                 curInstruction.label = token;
                             }
-                            if (wordcount == 4)
+                            if (wordcount == 4) //Stores the starting address of the program 
                                 curSection.start = stringToHex(token);
                             token.clear();
                         }
@@ -62,8 +62,8 @@ void SICXE_Parser::Read() {
                             }
                         }
                     }
-                    else if (lineCount == 1) { // ext def line
-                        if (comma && token.size() != 0 && extdef_F) {
+                    else if (lineCount == 1) {  //Line dedicated for finding EXTDEFs
+                        if (comma && token.size() != 0 && extdef_F) { //Stores definitions after every comma
                             curSection.extdef.push_back(token);
                             comma = false;
                             token.clear();
@@ -86,8 +86,8 @@ void SICXE_Parser::Read() {
                             }
                         }
                     }
-                    else if (lineCount == 2) { // ext ref line
-                        if (comma && token.size() != 0 && extref_F) {
+                    else if (lineCount == 2) { // Line dedicated for finding EXTREFs
+                        if (comma && token.size() != 0 && extref_F) { //Stores definitions after every comma
                             curSection.extref.push_back(token);
                             comma = false;
                             token.clear();
@@ -116,7 +116,7 @@ void SICXE_Parser::Read() {
                                 if (token == "END"){
                                     curInstruction.mnemonic = token;
                                 }
-                                if(j != line.size()-1)
+                                if(j != line.size()-1) //If no argument is given after END
                                     end = true;
                                 
                                 token.clear(); 
@@ -207,10 +207,10 @@ void SICXE_Parser::Read() {
 
                         }
                         else if (!isspace(c)) {
-                            token.push_back(c); //0035    LDX
-                            if (j == line.size() - 1) {
+                            token.push_back(c); 
+                            if (j == line.size() - 1) { //Last term of each line to determine if its op code, arg, or END arg
                                 wordcount++;
-                                if(end){
+                                if(end){ //Finds the argument after END
                                     for (int i = 0; i < curSection.instructions.size();++i) {
                                         if (token.compare(curSection.instructions[i].label) == 0) { //Checks all labels to grab address
                                             curInstruction.addr = curSection.instructions[i].addr;
@@ -237,15 +237,14 @@ void SICXE_Parser::Read() {
                 
             }
             else {
-                curSection.end = curSection.instructions.at(sizeOfVector - 1).addr; //Last instruction address
-                curSection.end += 3;
-                //printf("%X",curSection.end);
-                
+                //Last instruction address after END
+                curSection.end = curSection.instructions.at(sizeOfVector - 1).addr; 
+                curSection.end += 3; 
             }
             sections.emplace_back(curSection);
             sectionsIdx++;
         }
-        infile.close();
+        infile.close(); //Close file and open next file if given in next iteration
     }
 }
 uint32_t SICXE_Parser::stringToHex(string token) {
@@ -272,6 +271,7 @@ void SICXE_Parser::WriteObjFile() {
     }
 }
 
+//Writes to a file the symbol table for each section
 void SICXE_Parser::WriteSymTabFile() {
     stringstream write;
     string record = "";
@@ -283,9 +283,10 @@ void SICXE_Parser::WriteSymTabFile() {
     uint32_t length;
 
     outfile.open(filename, fstream::out);
-    for (int i = 0; i < sections.size(); ++i) {
+    for (int i = 0; i < sections.size(); ++i) { //Write out each section
         source = sections.at(i);
         s_name = sections.at(i).name;
+        //If statement to handle the first section
         if (i == 0) {
             s_start = sections.at(i).start; //000000
             s_end = sections.at(i).end; // 002F09
@@ -293,13 +294,12 @@ void SICXE_Parser::WriteSymTabFile() {
             record += SymTabSections(s_name, s_start, length);
             record += SymTabDefs(source, s_start);
         }
+        // Next section starting address is the end of the previous
         else {
-            s_start = s_end; // Next section starting address is the end of the previous
-            //printf("%X\n", length);
+            s_start = s_end; 
             length = sections.at(i).end - sections.at(i).start;
-            //printf("%X\n", length);
             s_end = s_start + length;
-            //printf("%X\n", s_end);
+            
             record += SymTabSections(s_name, s_start, length);
             record += SymTabDefs(source, s_start);
         }
@@ -307,6 +307,10 @@ void SICXE_Parser::WriteSymTabFile() {
     outfile << record;
     outfile.close();
 }
+/*Formatting of each section
+    Prints name, starting addres, and length
+    Returns string to add to the ESTAB file
+    */
 string SICXE_Parser::SymTabSections(string s_name, uint32_t s_start, uint32_t length) {
     stringstream write;
     string record;
@@ -325,6 +329,10 @@ string SICXE_Parser::SymTabSections(string s_name, uint32_t s_start, uint32_t le
     write.str("");
     return record;
 }
+/*Formatting of printing each EXTDEF from each section
+Prints name and location + starting address of section
+Returns string to add to the ESTAB file
+*/
 string SICXE_Parser::SymTabDefs(SICXE_Source section, uint32_t start) {
     string extDefStr, tmp;
     stringstream write;
