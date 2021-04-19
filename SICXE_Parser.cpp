@@ -94,6 +94,8 @@ void SICXE_Parser::Read() {
                             }
 
                             if (token.compare("END") == 0 || end) { //First checks for "END"
+                                if (token.compare("END") == 0)
+                                    curInstruction.mnemonic = token;
                                 for (int i = 0; i < curSection.instructions.size();++i) {
                                     if (token.compare(curSection.instructions[i].label) == 0) { //Checks all labels to grab address
                                         curInstruction.addr = curSection.instructions[i].addr;
@@ -195,6 +197,16 @@ void SICXE_Parser::Read() {
             }
             sectionsIdx++;
         }
+        //Find end address
+        int sizeOfVector = curSection.instructions.size();
+        if (curSection.instructions.at(sizeOfVector - 1).mnemonic.compare("END") == 0) { //Check if the last instruction is END
+            curSection.end = curSection.instructions.at(sizeOfVector - 2).addr; //Get address of instruction before END
+            curSection.end += 3;
+        }
+        else {
+            curSection.end = curSection.instructions.at(sizeOfVector).addr; //Last instruction address
+            curSection.end += 3;
+        }
     }
 }
 uint32_t SICXE_Parser::stringToHex(string token) {
@@ -222,9 +234,82 @@ void SICXE_Parser::WriteObjFile() {
 }
 
 void SICXE_Parser::WriteSymTabFile() {
+    stringstream write;
+    string record = "";
+    string filename = "ESTAB.st";
+    outfile.open(filename, fstream::out);
+    SICXE_Source source;
+    string s_name;
+    uint32_t s_start;
+    uint32_t s_end;
+    uint32_t length;
 
+    for (int i = 0; i < sections.size(); ++i) {
+        source = sections.at(i);
+        s_name = sections.at(i).name;
+        if (i == 0) {
+            s_start = sections.at(i).start; //000000
+            s_end = sections.at(i).end; // 002F09
+            length = s_end - s_start; // 002F09
+            record += SymTabSections(s_name, s_start, s_end);
+            record += SymTabDefs(source, length);
+            continue;
+        }
+        s_start = s_end; //Next section starting address is the end of the previous
+        length = sections.at(i).end - sections.at(i).start;
+        s_end = s_start + length;
+        record += SymTabSections(s_name, s_start, s_end);
+        record += SymTabDefs(source, length);
+    }
+    outfile.close();
 }
-
+string SICXE_Parser::SymTabSections(string s_name, uint32_t s_start, uint32_t length) {
+    stringstream write;
+    string record;
+    write << setfill(SPACE) << setw(8) << s_name;
+    record += write.str();
+    write.clear();
+    write << s_start << setw(8);
+    record += write.str();
+    write.clear();
+    write << length << setw(8) << endl;
+    record += write.str();
+    write.clear();
+    return record;
+}
+string SICXE_Parser::SymTabDefs(SICXE_Source section, uint32_t start) {
+    string extDefStr, tmp;
+    stringstream write;
+    uint32_t location;
+    bool found;
+    for (int i = 0; i < section.extdef.size(); ++i) {
+        tmp = section.extdef.at(i) + SPACE;
+        extDefStr = "";
+        // search for extdef in instructions
+        found = false;
+        for (int j = 0;j < section.instructions.size() && !found;i++) { // every instruction of source
+            if (section.instructions.at(j).label == tmp && section.instructions.at(j).mnemonic == "EQU") {
+                location = start + section.instructions.at(i).addr;
+                write << setfill(SPACE) << setw(8);
+                extDefStr += write.str();
+                write.clear();
+                write << setfill(SPACE) << setw(8) << extDefStr;
+                extDefStr += write.str();
+                write.clear();
+                write << setfill(SPACE) << setw(8) << location << endl;
+                extDefStr += write.str();
+                write.clear();
+                found = true;
+            }
+        }
+        if (!found) { // definition never found in section
+            errno = ENXIO;
+            fprintf(stderr, "EXTDEF %s defined but not loaded", tmp.c_str());
+            perror("");
+        }
+    }
+    return extDefStr;
+}
 // pass argv raw arg for filepath and return the filename with no extention
 string SICXE_Parser::RemoveFileExtension(string filename) {
     size_t start, end = 0;
@@ -234,6 +319,7 @@ string SICXE_Parser::RemoveFileExtension(string filename) {
     }
     end = filename.find_last_of(".");
     filename = filename.substr(start, end);
+    return filename;
 }
 
 string SICXE_Parser::BuildHeaderRecord(int idx) {
@@ -270,7 +356,7 @@ string SICXE_Parser::BuildExtDef(int idx) {
         }
         if (!found) { // definition never found in section
             errno = ENXIO;
-            fprintf(stderr, "EXTDEF %s defined but not loaded", tmp);
+            fprintf(stderr, "EXTDEF %s defined but not loaded", tmp.c_str());
             perror("");
         }
     }

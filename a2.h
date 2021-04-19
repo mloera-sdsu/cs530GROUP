@@ -62,6 +62,8 @@ private:
     string RemoveFileExtension(string filename);
     int HasExtRef(string token, int sectionIdx);
     char LeadingPlusOrMinusCheck(string token);
+    string SymTabDefs(SICXE_Source section, uint32_t start);
+    string SymTabSections(string s_name, uint32_t s_start, uint32_t lengths);
 };
 
 // source file contents consisting of an array of SICXE_Instruction objects
@@ -73,7 +75,6 @@ public:
     uint32_t start, end;
 
     SICXE_Source();
-    void Term(string term);
 };
 
 // one line of sic/xe with address label mnemonic etc..
