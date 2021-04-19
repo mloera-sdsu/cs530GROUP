@@ -13,11 +13,14 @@ void SICXE_Parser::Read() {
     bool comma;
     bool extdef_F = false;
     bool extref_F = false;
+    bool end = false;
+    bool inDictionary;
     string line, token, previousToken;
     SICXE_Source curSection;
     SICXE_Instruction curInstruction;
-    // for every path
-    for (int i = 0;i < paths.size();i++) {
+	SICXE_Dictionary mnemonicsDictionary;
+	// for every path
+	for (int i = 0;i < paths.size();i++) {
         infile.open(paths.at(i));
         if (!infile.good()) {
             errno = ENOENT;
@@ -32,6 +35,7 @@ void SICXE_Parser::Read() {
                 int lineCount = curSection.instructions.size();
                 curInstruction = SICXE_Instruction();
                 for (int j = 0;line.at(j);j++) { // char by char
+                    
                     c = line.at(j);
                     if (c == ',')
                         comma = true;
@@ -84,21 +88,35 @@ void SICXE_Parser::Read() {
                         }
                     }
                     else{ // in general
+						if ((isspace(c) && token.size() != 0)) { // word defining condition for in general
+                        	if (mnemonicsDictionary.mnemonics.count(token) > 0U){ //check if token is in dictionary 
+                                inDictionary = true;
+							}
 
-                        if ((isspace(c) && token.size() != 0) /*|| (comma && token.size()!=0)*/) { // word defining condition for in general
-                            if(curInstruction.addr == NULL){
+                            if(token.compare("END") == 0 || end){ //First checks for "END"
+                                for(int i=0; i<curSection.instructions.size();++i){
+                                    if(token.compare(curSection.instructions[i].label) == 0){ //Checks all labels to grab address
+                                        curInstruction.addr = curSection.instructions[i].addr;
+                                    }
+                                }
+
+                                token.erase();
+                                end = true;
+                                continue; //Move on to name after "END", end is false if next line
+                            }
+                            else if(curInstruction.addr == NULL){        //Handles adding addr token
                                 curInstruction.addr = stringToHex(token);
 								token.erase();
 							}
-                            else if(curInstruction.label.compare("NULL") && curInstruction.mnemonic.compare("NULL") /*&& not in dict*/){
+                            else if(curInstruction.label.compare("NULL") && curInstruction.mnemonic.compare("NULL") && !inDictionary){ //handles adding label token
                                 curInstruction.label = token;
 								token.erase();
 							}
-                            else if(curInstruction.mnemonic.compare("NULL")){
+                            else if(curInstruction.mnemonic.compare("NULL")){ //Handles adding mnemonic token
 								curInstruction.mnemonic = token;
 								token.erase();
 							}
-                            else if(curInstruction.args.empty()){ //Check if vector string is empty
+                            else if(curInstruction.args.empty()){ //Handles adding args (1st section if +/-)(2nd section if ',')(3rd if jusst token)
                                 if(token.find('+') != string::npos || token.find('-') != string::npos){ //Check if token has + or -
 
                                     //Handle parenthesis first 
@@ -138,7 +156,8 @@ void SICXE_Parser::Read() {
                                     curInstruction.args.push_back(tempPlusMinus);
                                     token.erase();
                                 }
-                                else if(token.find(',') != std::string::npos){ // check if token has comma
+                                // Checks if token has comma and seperates and adds them to args
+                                else if(token.find(',') != std::string::npos){
                                     string tempComma;
                                     for(int m = 0; m < token.size() - 1; m++){
                                         if(token[m] != ','){
@@ -156,12 +175,10 @@ void SICXE_Parser::Read() {
                                 }
                                 token.erase();
                             }
-                            else if(curInstruction.objcode == NULL && j == line.length()-1){
+                            else if(curInstruction.objcode == NULL && j == line.length()-1){ //Handles adding object code tokens
                                 curInstruction.objcode = stringToHex(token);
                                 token.erase();
 							}
-
-							//wordcount = CheckToken(token, wordcount, curSection.extdef);
                             previousToken = token;
                             token.erase(); // token = ""
 
@@ -184,21 +201,7 @@ uint32_t SICXE_Parser::stringToHex(string token){
     ss>>token_Hex;
     return token_Hex;
 }
-int SICXE_Parser::CheckToken(string token, int column, vector<string> defs){
-    if(token.compare("START") == 0){
-        column = START;
-    }
-    else if (token.compare("EXTDEF") == 0) {
-        column = EXTDEF;
-    }
-    else if (token.compare("EXTREF") == 0) {
-        column = EXTREF;
-    }
-    else if (column == 0 && token.compare("END") != 0) {
-        column = ADDR_COL;
-    }
-    return column;
-}
+
 // writes to a file, might need to pass a string mode parameter to specify type of output file
 void SICXE_Parser::Write() {
     string filename;

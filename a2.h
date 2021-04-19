@@ -81,7 +81,7 @@ public:
 
 class SICXE_Dictionary {
 public:
-    set<string> mnemonics;
+    set<string> mnemonics = {};
 
     SICXE_Dictionary();
 };

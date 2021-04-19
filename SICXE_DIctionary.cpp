@@ -2,8 +2,13 @@
 
 // default constructor initializes the dict
 SICXE_Dictionary::SICXE_Dictionary() {
-    mnemonics = {"ADD", "ADDF", "ADDR", "AND", "CLEAR", "COMP", "COMPF", "COMPR", "DIV", "DIVF", "DIVR", "FIX", "FLOAT"
-    , "HIO", "J", "JEQ", "JGT", "JLT", "JSUB", "LDA", "LDB", "LDCH", "LDF", "LDL", "LDS", "LDT", "LDX", "LPS", "MUL", "MULF", "MULR"
-    , "NORM", "OR", "RD", "RMO", "RSUB", "SHIFTL", "SHIFTR", "SIO", "SSK", "STA", "STB", "STCH", "STF", "STI", "STL", "STS", "STSW"
-    , "STT", "STX", "SUB", "SUBF", "SUBR", "SVC", "TD", "TIO", "TIX", "TIXR", "WD"}; // <---add in here
+    mnemonics = {"ADD", "+ADD", "+ADDF", "ADDF", "ADDR", "+AND", "AND", "CLEAR", "+COMP"
+    , "COMP", "+COMPF", "COMPF", "COMPR", "+DIV", "DIV", "+DIVF" "DIVF", "DIVR", "FIX", "FLOAT"
+    , "HIO", "+J", "J", "+JEQ", "JEQ", "+JGT", "JGT", "+JLT", "JLT", "+JSUB", "JSUB", "+LDA"
+    , "LDA", "+LDB", "LDB", "+LDCH", "LDCH", "+LDF", "LDF", "+LDL", "LDL", "+LDS", "LDS", "+LDT"
+    , "LDT", "+LDX", "LDX", "+LPS", "LPS", "+MUL", "MUL", "+MULF", "MULF", "MULR", "NORM", "+OR"
+    , "OR", "+RD", "RD", "RMO", "+RSUB", "RSUB", "SHIFTL", "SHIFTR", "SIO", "+SSK", "SSK", "+STA"
+    , "STA", "+STB", "STB", "+STCH", "STCH", "+STF", "STF", "+STI", "STI", "+STL", "STL", "+STS"
+    , "STS", "+STSW", "STSW", "+STT", "STT", "+STX", "STX", "+SUB", "SUB", "+SUBF", "SUBF", "SUBR"
+    , "SVC", "+TD", "TD", "TIO", "+TIX", "TIX", "TIXR", "+WD", "WD"}; // <---add in here
 }
