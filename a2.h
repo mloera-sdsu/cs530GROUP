@@ -54,6 +54,8 @@ private:
     string BuildTextRecord(int idx);
     string BuildModRecord(int idx);
     string RemoveFileExtension(string filename);
+    string SymTabDefs(SICXE_Source section, uint32_t start);
+    string SymTabSections(string s_name, uint32_t s_start, uint32_t length);
 };
 
 // source file contents consisting of an array of SICXE_Instruction objects
