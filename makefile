@@ -19,6 +19,5 @@ SICXE_Instruction.o: SICXE_Instruction.cpp ${MAIN}.h
 SICXE_Dictionary.o: SICXE_Dictionary.cpp ${MAIN}.h
 	${CC} ${CFLAGS} -c SICXE_Dictionary.cpp
 
-
 clean:
 	rm -f *.o ${EXECNAME} *.exe
