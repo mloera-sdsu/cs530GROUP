@@ -52,12 +52,13 @@ clean:
 # Design Decisions
 - Used a seperate .h file to keep declarations and definitions seperate from source code space
 - Broke down the program into 2 main functions where one handles reading in of file, and the other processes file (more detail within .cpp source file)
-
 - Definitions (**#define**) used for important paramaters used in IO calls, important branching conditionals, or for important array access indecies
-- Some variables global for simpler function calls (making code look clean), also made sense the functions should be able to see these variables within their scope along with **main()**
+- Used different classes to store information of the source currently analyzing. Stored each source into vectors of its corresponding type of data
 # Features, Algorithms, Functionality
-- Used **iostream** along with **bitset** for compatability between the two when it comes to IO
+- Parsing and storing data into vectors and objects. Also used stringstreams and file streams to write text into a new file.
+- Handles starting, extdef, and extref lines before the rest of the instructions
+- Prints ESTAB (name of sections, extdefs per section, lengths, and starting and ending addresses)
 # Bugs
 **N/A**
 # Lessons Learned
-- Bitset was a new type that I had never used and made it easy to interpret data into binary.
+Parsing methods from each member can be combined to receive desired ouput. It is more efficient to store all data neceesary prior to outputting results
