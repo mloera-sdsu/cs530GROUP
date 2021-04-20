@@ -10,6 +10,7 @@
 #include <sstream>
 #include <set>
 #include <algorithm>
+#include <math.h>
 
 #define FIRST_ARG 1
 #define ADDR_COL 1
@@ -26,15 +27,20 @@
 #define EXTREFOBJ 'R'
 #define TEXTOBJ 'T'
 #define MODOBJ 'M'
+#define ENDOBJ 'E'
 #define M_WORD "WORD"
 #define OBJECT_EXTENSION ".obj"
 #define TEXTREC_BYTE_LIMIT 16
 #define SPACE ' '
 #define PLUS '+'
 #define MINUS '-'
+#define COMMA ','
+#define HASHTAG '#'
 #define FAIL_FIND -1
 #define ADDR_DIGIT_PLACES 6
 #define EXT_ADDR_DIGIT_PLACES 8
+#define FORMAT_3_BITS 12
+#define FORMAT_4_BITS 20
 
 using namespace std;
 
@@ -55,6 +61,7 @@ public:
     SICXE_Parser(int &argc, char *argv[]);
     void Read();
     int CheckToken(string token, int column, vector<string> defs);
+    void MemCheck();
     void WriteObjFile();
     void WriteSymTabFile();
 private:
@@ -64,6 +71,7 @@ private:
     string BuildExtRef(int idx);
     string BuildTextRecord(int idx);
     string BuildModRecord(int idx);
+    string BuildEndRecord(int idx);
     string RemoveFileExtension(string filename);
     int HasExtRef(string token, int sectionIdx);
     char LeadingPlusOrMinusCheck(string token);
@@ -96,7 +104,7 @@ public:
 
 class SICXE_Dictionary {
 public:
-    set<string> mnemonics = {};
+    set<string> mnemonics, directives;
 
     SICXE_Dictionary();
 };

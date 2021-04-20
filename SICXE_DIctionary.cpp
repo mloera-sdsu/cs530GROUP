@@ -11,5 +11,8 @@ SICXE_Dictionary::SICXE_Dictionary() {
     , "STA", "+STB", "STB", "+STCH", "STCH", "+STF", "STF", "+STI", "STI", "+STL", "STL", "+STS"
     , "STS", "+STSW", "STSW", "+STT", "STT", "+STX", "STX", "+SUB", "SUB", "+SUBF", "SUBF", "SUBR"
     ,"START", "END", "ORG", "LTORG", "BASE", "NOBASE", "CSECT", "USE", "EQU", "RESB", "RESW", "EXTDEF"
-    , "EXTREF", "SVC", "+TD", "TD", "TIO", "+TIX", "TIX", "TIXR", "+WD", "WD", }; // <---add in here
+    , "EXTREF", "SVC", "+TD", "TD", "TIO", "+TIX", "TIX", "TIXR", "+WD", "WD",
+    };
+    directives = { "START", "END", "ORG", "LTORG", "BASE", "NOBASE", "CSECT", "USE", "EQU", "RESB", "RESW", "EXTDEF"
+    , "EXTREF" };
 }
