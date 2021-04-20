@@ -1,39 +1,63 @@
+# Metadata
 
-# CANVAS INSTRUCTIONS (updated 3/29)
+**File**: README
 
- 1. All files are "text" files. For this project, please use the following filename extensions to help us understand the content of these files:
-    * .sic -- SIC/XE assembly source
-    * .lis -- SIC/XE listing file
-    * .obj -- SIC/XE object file
-    * .st -- SIC/XE ESTAB file
+**Authors**: Manuel Loera,Brandon Altamirano Ortega,Shane Moro, cssc3711
 
-2. Output -- additional details explaining the project requirements; your project will generate SIC/XE object files, one for each control section and the ESTAB for the program. Each control section will be in its own assembly source / listing file and you will generate an object file for each listing file you are linking. Remember to hand "main" correctly, End records, and such. As such, this isn't a true linker which would combine all control sections into one object code file. This would actually be easy to do but not required for this project.
+**Account**: cssc3006,cssc3740,cssc3711
 
-3.  Sample listing files -- several of you asked to have the text versions of the sample files provided. I will provide those here but please note, it's easy to accidentally change any content (delete/add a whitespace). Also, be careful if you move the file to other computers, some termio (terminal input/output controls) or programs alters the whitespace comments (replaces spaces with tabs, etc):
-	>P2sampleAdder.lis
-	>P2sampleWriter.lis
+**Class**: cs530 Spring 2021
 
+**Assignment**: Project 2, LED
 
-4. ESTAB format. Since this is an internal (run time) data structure, the number of spaces between fields isn't a hard requirement as long as there are enough for the symbol names (length) and the addresses. A suggested format could be like this:
+# File Manifest
 
-	>Control Section (6 columns), 2 columns (spaces), Symbol Name (6 														columns), 2 columns (spaces), Address (6 columns), 2 columns (spaces), 			Length (6 columns).
+- a2.cpp
+- a2.h
+- README.md
+- SICXE_Parser.cpp
+- SICXE_Source.cpp
+- SICXE_Instruction.cpp
+- SICXE_Dictionary.cpp
+- dump
 
-    Figure 3.11 (a) on page 143 of our text has a good example.
+# Compiler Instructions
+**From makefile...**
+```CC = g++
+EXECNAME = led
+CFLAGS = -g -Wall -Wextra -pedantic -std=c++11
+OBJS = SICXE_Parser.o SICXE_Source.o SICXE_Instruction.o SICXE_Dictionary.o
+MAIN = a2
 
+compile: ${OBJS}
+	${CC} ${CFLAGS} -o ${EXECNAME} ${MAIN}.cpp ${OBJS}
 
+SICXE_Parser.o: SICXE_Parser.cpp ${MAIN}.h
+	${CC} ${CFLAGS} -c SICXE_Parser.cpp
 
-5. SYMTAB. Don't confuse the SYMTAB with the ESTAB; I am not asking you to produce a SYMTAB but you will be doing some of that work to generate the Modification records. For expression evaluation, I will only be using expressions involving a local symbol and one outside of the control section. Or, two symbols outside of the control section. It is not hard to build a full expression evaluator, if you do that be sure to document that in your README.
+SICXE_Source.o: SICXE_Source.cpp ${MAIN}.h
+	${CC} ${CFLAGS} -c SICXE_Source.cpp
 
+SICXE_Instruction.o: SICXE_Instruction.cpp ${MAIN}.h
+	${CC} ${CFLAGS} -c SICXE_Instruction.cpp
 
+SICXE_Dictionary.o: SICXE_Dictionary.cpp ${MAIN}.h
+	${CC} ${CFLAGS} -c SICXE_Dictionary.cpp
 
-6. You also asked for sample object files to correspond with these listing files:
+clean:
+	rm -f *.o ${EXECNAME} *.exe
+```
+***These commands work for any regular file as long as the file path is valid***
 
-	>P2sampleAdder.obj
-	>P2sampleWriter.obj
+# Design Decisions
+- Used a seperate .h file to keep declarations and definitions seperate from source code space
+- Broke down the program into 2 main functions where one handles reading in of file, and the other processes file (more detail within .cpp source file)
 
-
-
-	and to complete the set, the ESTAB: P2sampleESTAB.st
-
-
-## ***This README will be replaced for the required one noted on the specs at end of project***
+- Definitions (**#define**) used for important paramaters used in IO calls, important branching conditionals, or for important array access indecies
+- Some variables global for simpler function calls (making code look clean), also made sense the functions should be able to see these variables within their scope along with **main()**
+# Features, Algorithms, Functionality
+- Used **iostream** along with **bitset** for compatability between the two when it comes to IO
+# Bugs
+**N/A**
+# Lessons Learned
+- Bitset was a new type that I had never used and made it easy to interpret data into binary.
