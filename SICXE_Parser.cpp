@@ -217,6 +217,7 @@ void SICXE_Parser::Read() {
                             if (j == line.size() - 1) {
                                 wordcount++;
                                 if (end) {
+                                    curInstruction.args.push_back(token);
                                     for (int i = 0; i < curSection.instructions.size();++i) {
                                         if (token.compare(curSection.instructions[i].label) == 0) { //Checks all labels to grab address
                                             curInstruction.addr = curSection.instructions[i].addr;
@@ -224,6 +225,8 @@ void SICXE_Parser::Read() {
                                         }
                                     }
                                 }
+                                else if (curInstruction.mnemonic.find("EOF") != string::npos)
+                                    curInstruction.objcode = stringToHex(token);
                                 else if (curInstruction.args.empty())
                                     curInstruction.args.push_back(token);
                                 else if (wordcount == OBJCODE_COL)
@@ -240,7 +243,6 @@ void SICXE_Parser::Read() {
             if (curSection.instructions.at(sizeOfVector - 1).mnemonic == "END") { //Check if the last instruction is END
                 curSection.end = curSection.instructions.at(sizeOfVector - 2).addr; //Get address of instruction before END
                 curSection.end += 3;
-
             }
             else {
                 curSection.end = curSection.instructions.at(sizeOfVector - 1).addr; //Last instruction address
@@ -328,11 +330,8 @@ void SICXE_Parser::WriteSymTabFile() {
         }
         else {
             s_start = s_end; // Next section starting address is the end of the previous
-            //printf("%X\n", length);
             length = sections.at(i).end - sections.at(i).start;
-            //printf("%X\n", length);
             s_end = s_start + length;
-            //printf("%X\n", s_end);
             record += SymTabSections(s_name, s_start, length);
             record += SymTabDefs(source, s_start);
         }
@@ -496,8 +495,8 @@ string SICXE_Parser::BuildTextRecord(int idx) {
             if (curInstruction.mnemonic.find('+') != string::npos) // extended addressing case
                 digitPlaces = EXT_ADDR_DIGIT_PLACES;
 
-            if (bytecount + digitPlaces / 2 > TEXTREC_BYTE_LIMIT || i == totalInstructions - 1) {// check if surpassed byte limit or last instruction
-                stream << uppercase << hex << bytecount;
+            if (bytecount + digitPlaces / 2 > TEXTREC_BYTE_LIMIT) {// check if surpassed byte limit or last instruction
+                stream << uppercase << setfill('0') << setw(2) << hex << bytecount;
                 textRecStr.insert(idxForLength, stream.str());
                 textRecStr += "\n";
                 stream.str("");
@@ -511,9 +510,16 @@ string SICXE_Parser::BuildTextRecord(int idx) {
                 stream << uppercase << setfill('0') << setw(digitPlaces) << hex << curInstruction.objcode;
                 textRecStr += stream.str();
                 stream.str("");
+                if (i == totalInstructions - 1) {
+                    stream << uppercase << setfill('0') << setw(2) << hex << bytecount;
+                    textRecStr.insert(idxForLength, stream.str());
+                    textRecStr += "\n";
+                    stream.str("");
+                }
             }
         }
     }
+
     return textRecStr;
 }
 
@@ -573,19 +579,14 @@ string SICXE_Parser::BuildEndRecord(int idx) {
     bool found = false;
 
     tmp = ENDOBJ;
-    for (int i = curSection.instructions.size() - 1;i > 0 && !found;i--) {
+    for (auto i = curSection.instructions.size() - 1;i > 0 && !found;i--) {
         curInstruction = curSection.instructions.at(i);
         if (curInstruction.mnemonic == "END") {
             if (!curInstruction.args.empty()) {
-                for (int j = 0;j < curSection.instructions.size() && !found;j++) {
-                    nestedInstruction = curSection.instructions.at(j);
-                    if (nestedInstruction.label == curInstruction.args.front()) {
-                        stream << uppercase << setfill('0') << setw(ADDR_DIGIT_PLACES) << hex << nestedInstruction.addr;
-                        tmp = stream.str();
-                        stream.str("");
-                        found = true;
-                    }
-                }
+                stream << uppercase << setfill('0') << setw(ADDR_DIGIT_PLACES) << hex << curInstruction.addr;
+                tmp += stream.str();
+                stream.str("");
+                found = true;
             }
         }
     }

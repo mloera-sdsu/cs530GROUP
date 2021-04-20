@@ -1,5 +1,4 @@
-*.pdf
-!Project2.Fall2021.pdf
+*.obj
 *.exe
 *.o
 .*

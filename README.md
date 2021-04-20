@@ -2,7 +2,7 @@
 
 **File**: README
 
-**Authors**: Manuel Loera,Brandon Altamirano Ortega,Shane Moro, cssc3711
+**Authors**: Manuel Loera,Brandon Altamirano Ortega,Shane Moro
 
 **Account**: cssc3006,cssc3740,cssc3711
 
@@ -19,7 +19,7 @@
 - SICXE_Source.cpp
 - SICXE_Instruction.cpp
 - SICXE_Dictionary.cpp
-- dump
+- led
 
 # Compiler Instructions
 **From makefile...**

@@ -20,4 +20,4 @@ SICXE_Dictionary.o: SICXE_Dictionary.cpp ${MAIN}.h
 	${CC} ${CFLAGS} -c SICXE_Dictionary.cpp
 
 clean:
-	rm -f *.o ${EXECNAME} *.exe
+	rm -f *.o ${EXECNAME} *.exe *.obj *.st
