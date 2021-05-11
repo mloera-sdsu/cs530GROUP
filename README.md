@@ -49,6 +49,23 @@ clean:
 ```
 ***These commands work for any regular file as long as the file path is valid***
 
+# Running the Program...
+**Build the program**
+
+- make sure to be in the directory of the project and run make in console:
+
+```$> make```
+
+**Run the program**
+
+- use sample files in the ./samples folder
+
+```
+$> led samples/P2sampleAdder.lis samples/P2sampleWriter.lis
+```
+
+- output from program shows memory reference errors on terminal, and outputs .obj and .st files regardless of invalid references for purposes of demonstration (though we could've halted at invalid memory)
+
 # Design Decisions
 - Used a seperate .h file to keep declarations and definitions seperate from source code space
 - Broke down the program into 2 main functions where one handles reading in of file, and the other processes file (more detail within .cpp source file)

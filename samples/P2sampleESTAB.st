@@ -1,7 +1,0 @@
-ADD             000000  002F09
-        COUNT   000020
-	TABLE   000023
-        TABLE2  001793
-WRITE           002F09  00002C
-        LEN     002F2F
-                                       
